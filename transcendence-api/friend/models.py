@@ -1,4 +1,5 @@
 from django.db import models
+from users.models import CustomUser
 
 # Create your models here.
 class Friend(models.Model):
@@ -7,8 +8,8 @@ class Friend(models.Model):
         REFUSE = 'RF', 'Refuse'
         BLOCK = 'BL', 'Block'
         WAIT = 'WT', 'Wait'
-    user1 = models.ForeignKey(User, on_delete=models.CASCADE)
-    user2 = models.ForeignKey(User, on_delete=models.CASCADE)
+    user1 = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    user2 = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     user1_victory_num = models.IntegerField()
     user2_victory_num = models.IntegerField()
     status = models.CharField(max_length=2,

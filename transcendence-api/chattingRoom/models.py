@@ -1,6 +1,6 @@
 from django.db import models
-from user.models import User
+from users.models import CustomUser
 
 class ChattingRoom(models.Model):
-    user1 = models.ForeignKey(User, on_delete=models.CASCADE)
-    user2 = models.ForeignKey(User, on_delete=models.CASCADE)
+    user1 = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    user2 = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
