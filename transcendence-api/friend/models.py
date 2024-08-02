@@ -8,11 +8,10 @@ class Friend(models.Model):
         REFUSE = 'RF', 'Refuse'
         BLOCK = 'BL', 'Block'
         WAIT = 'WT', 'Wait'
-    user1 = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    user2 = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    user1 = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='friend_user1')
+    user2 = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='friend_user2')
     user1_victory_num = models.IntegerField()
     user2_victory_num = models.IntegerField()
     status = models.CharField(max_length=2,
                               choices=Status.choices,
                               default=Status.WAIT)
-    
