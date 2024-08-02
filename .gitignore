@@ -10,3 +10,4 @@ app/.env
 env/
 venv/
 .idea/
+data/
