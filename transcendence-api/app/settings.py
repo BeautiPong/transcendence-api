@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'game',
     'message',
     'scoreHistory',
+    'requests'
 ]
 
 MIDDLEWARE = [
