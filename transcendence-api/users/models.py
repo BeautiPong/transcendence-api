@@ -3,10 +3,10 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 class CustomUserManager(BaseUserManager):
-    def create_user(self, nickname, password=None, **extra_fields):
-        if not nickname:
-            raise ValueError(_('The Nickname field must be set'))
-        user = self.model(nickname=nickname, **extra_fields)
+    def create_user(self, userID, password=None, **extra_fields):
+        if not userID:
+            raise ValueError(_('The userId field must be set'))
+        user = self.model(userID=userID, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -24,13 +24,14 @@ class CustomUserManager(BaseUserManager):
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     nickname = models.CharField(max_length=30, unique=True)
-    userID = models.CharField(max_length=30, blank=True, null=True)
+    userID = models.CharField(max_length=30, blank=True, null=True, unique=True)
     oauthID = models.CharField(max_length=30, blank=True, null=True)
     score = models.IntegerField(default=0)
     image = models.ImageField(upload_to='profile_pics', null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
+    email = models.EmailField(unique=True)
 
     objects = CustomUserManager()
 
