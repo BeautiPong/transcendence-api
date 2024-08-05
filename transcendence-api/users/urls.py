@@ -3,8 +3,8 @@ from django.urls import path
 from .views import join, login, UserProfileView
 
 urlpatterns = [
-    path('join/', join, name='join'),
-    path('login/', login, name='login'),
+    path('account/join/', join, name='join'),
+    path('account/login/', login, name='login'),
     path('api/profile/', UserProfileView.as_view(), name='user_profile'),
 
     path('login/', get_code, name='get_code'),
