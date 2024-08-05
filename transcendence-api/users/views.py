@@ -15,6 +15,7 @@ from django.http import JsonResponse
 
 
 # Create your views here.
+
 def get_code(request): 
     client_id = 'u-s4t2ud-5165cfc59957b2a5cd674a6fc909e1e94378eff8b68d30144cbf571ed0b80ea1'
     redirect_uri = 'http://localhost:8000/'
@@ -163,8 +164,12 @@ class UserProfileView(APIView):
 
         response = JsonResponse(
             {
-                "user id" : user.id,
                 "username" : user.nickname,
+                "email" : user.email,
+                "profile_img" : user.image,
+                "match_cnt" : user.match_cnt,
+                "win_cnt" : user.win_cnt,
+                "win_rate" : user.win_cnt / user.match_cnt * 100,
             },
             status = status.HTTP_200_OK
         )
