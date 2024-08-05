@@ -10,6 +10,9 @@ from django.contrib.auth.hashers import check_password
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.http import HttpResponseRedirect
+from django.http import JsonResponse
+
 
 # Create your views here.
 def get_code(request): 
