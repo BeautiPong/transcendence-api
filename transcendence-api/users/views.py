@@ -4,6 +4,9 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework_simplejwt.serializers import *
 from rest_framework import status
 from django.contrib.auth.hashers import check_password
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 # 회원가입
 @csrf_exempt
@@ -52,3 +55,20 @@ def login (request) :
             response.set_cookie("refresh_token", refresh_token, httponly=True)
 
             return response
+        
+# 로그인된 사용자 정보 반환
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def get(self, request):
+        user = request.user
+
+        response = JsonResponse(
+            {
+                "user id" : user.id,
+                "username" : user.nickname,
+            },
+            status = status.HTTP_200_OK
+        )
+        return response
