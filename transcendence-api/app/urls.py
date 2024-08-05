@@ -14,5 +14,6 @@ urlpatterns = [
 
     path('join/', join, name='signup'),
     path('login/', login, name='login'),
+    path('api/profile/', UserProfileView.as_view(), name='user_profile'),
     path('otp/', include("otp.urls")),
 ]
