@@ -20,16 +20,22 @@ def join (request) :
     user = CustomUser.objects.filter(userID=userID).first()
     if user :
         response = JsonResponse(
-            {"message": "이미 회원가입 된 회원입니다."},
-            status = status.HTTP_200_OK)
+            {
+                "message": "이미 회원가입 된 회원입니다."
+            },
+            status = status.HTTP_200_OK
+        )
 
     else :
         # 사용자 생성 후 DB에 저장
         CustomUser.objects.create_user(userID=userID, password=password,nickname=nickname)
         
         response = JsonResponse(
-            {"message": "회원가입 성공!"},
-            status = status.HTTP_200_OK)
+            {
+                "message": "회원가입 성공!"
+            },
+            status = status.HTTP_200_OK
+        )
     
     return response
 
@@ -42,7 +48,7 @@ def login (request) :
 
         user = CustomUser.objects.filter(userID=userID).first()
 
-        # user가 DB에 있다면
+        # user가 DB에 있고 비밀번호가 맞다면
         if user and check_password(password, user.password):
             token = TokenObtainPairSerializer.get_token(user)  # refresh token 생성
             refresh_token = str(token)
@@ -61,7 +67,16 @@ def login (request) :
             response.set_cookie("access_token", access_token, httponly=True)
             response.set_cookie("refresh_token", refresh_token, httponly=True)
 
-            return response
+        else :
+            response = JsonResponse (
+                {
+                    "message": "아이디 또는 비밀번호가 틀렸습니다."
+                },
+                status = status.HTTP_401_UNAUTHORIZED
+            )
+
+        return response
+
         
 # 로그인된 사용자 정보 반환
 class UserProfileView(APIView):
