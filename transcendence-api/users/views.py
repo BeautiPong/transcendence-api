@@ -91,6 +91,7 @@ def join (request) :
         userID = request.POST.get('userID')   # 로그인 시 필요한 아이디 (고유)
         password = request.POST.get('password') # 로그인 시 필요한 비밀번호
         nickname = request.POST.get('nickname') # 사용자 닉네임 (고유)
+        email = request.POST.get('email')  # 이메일
 
     # 사용자가 이미 회원가입을 했는지 확인
     user = CustomUser.objects.filter(userID=userID).first()
@@ -104,7 +105,7 @@ def join (request) :
 
     else :
         # 사용자 생성 후 DB에 저장
-        CustomUser.objects.create_user(userID=userID, password=password,nickname=nickname)
+        CustomUser.objects.create_user(userID=userID, password=password,nickname=nickname, email=email)
         
         response = JsonResponse(
             {
