@@ -23,13 +23,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt',
     'users',
     'chattingRoom',
     'friend',
     'game',
     'message',
     'scoreHistory',
-    'requests'
+    'otp',
 ]
 
 MIDDLEWARE = [
