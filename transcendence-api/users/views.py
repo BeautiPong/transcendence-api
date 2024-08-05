@@ -16,14 +16,21 @@ def join (request) :
         password = request.POST.get('password') # 로그인 시 필요한 비밀번호
         nickname = request.POST.get('nickname') # 사용자 닉네임 (고유)
 
-    user = CustomUser.objects.create_user(userID=userID, password=password,nickname=nickname)
+    # 사용자가 이미 회원가입을 했는지 확인
+    user = CustomUser.objects.filter(userID=userID).first()
+    if user :
+        response = JsonResponse(
+            {"message": "이미 회원가입 된 회원입니다."},
+            status = status.HTTP_200_OK)
+
+    else :
+        # 사용자 생성 후 DB에 저장
+        CustomUser.objects.create_user(userID=userID, password=password,nickname=nickname)
+        
+        response = JsonResponse(
+            {"message": "회원가입 성공!"},
+            status = status.HTTP_200_OK)
     
-    response = JsonResponse(
-        {
-            "message": "회원가입 성공"
-        },
-        status = status.HTTP_200_OK
-    )
     return response
 
 # 자체 로그인
