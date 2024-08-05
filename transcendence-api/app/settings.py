@@ -47,8 +47,7 @@ ROOT_URLCONF = 'app.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
-        ,
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -75,7 +74,6 @@ DATABASES = {
 }
 
 AUTH_USER_MODEL = 'users.CustomUser'
-
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -125,3 +123,11 @@ SIMPLE_JWT = {
     'AUTH_TOKEN_CLASSES': ('access',),
     'TOKEN_TYPE_CLAIM': 'token_type',
 }
+
+EMAIL_BACKEND = 'backends.CustomEmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
