@@ -5,7 +5,7 @@ import urllib.parse
 from users.models import CustomUser
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework_simplejwt.serializers import *
-from rest_framework import status
+from rest_framework import status, generics
 from django.contrib.auth.hashers import check_password
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -178,3 +178,16 @@ class UserProfileView(APIView):
             status = status.HTTP_200_OK
         )
         return response
+
+# 사용자 정보 수정
+class UserProfileUpdateView(generics.UpdateAPIView):
+    # queryset = UserProfile.objects.all()
+    # serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def get_object(self, request):
+        # 현재 로그인된 사용자의 UserProfile을 가져옵니다.
+        user = request.user
+
+        return UserProfile.objects.get(user=self.request.user)
