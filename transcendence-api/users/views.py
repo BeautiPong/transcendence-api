@@ -97,10 +97,10 @@ def join (request) :
     user = CustomUser.objects.filter(userID=userID).first()
     if user :
         response = JsonResponse({"message": "이미 회원가입 된 회원입니다."},
-            status = status.HTTP_202_Accepted)
+            status = status.HTTP_202_ACCEPTED)
     else :
         # 사용자 생성 후 DB에 저장
-        CustomUser.objects.create_user(userID=userID, password=password,nickname=nickname)
+        CustomUser.objects.create_user(userID=userID, password=password,nickname=nickname, email=email)
         response = JsonResponse({"message": "회원가입 성공!"},
             status = status.HTTP_200_OK)
     return response
