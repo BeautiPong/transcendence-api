@@ -555,7 +555,9 @@ CREATE TABLE public.users_customuser (
     is_active boolean NOT NULL,
     is_staff boolean NOT NULL,
     date_joined timestamp with time zone NOT NULL,
-    email character varying(254) NOT NULL
+    email character varying(254) NOT NULL,
+    match_cnt integer NOT NULL,
+    win_cnt integer NOT NULL
 );
 
 
@@ -844,6 +846,8 @@ COPY public.django_migrations (id, app, name, applied) FROM stdin;
 41	socialaccount	0004_app_provider_id_settings	2024-08-04 00:20:29.172858+00
 42	socialaccount	0005_socialtoken_nullable_app	2024-08-04 00:20:29.179845+00
 43	socialaccount	0006_alter_socialaccount_extra_data	2024-08-04 00:20:29.187124+00
+44	users	0002_alter_customuser_userid	2024-08-06 04:06:12.362447+00
+45	users	0003_customuser_match_cnt_customuser_win_cnt_and_more	2024-08-06 04:06:12.374029+00
 \.
 
 
@@ -868,6 +872,8 @@ COPY public.friend_friend (id, user1_victory_num, user2_victory_num, status, use
 --
 
 COPY public.game_game (id, user1_score, user2_score, create_time, user1_id, user2_id) FROM stdin;
+1	1	2	2024-08-06 07:01:03.085278+00	3	5
+2	2	1	2024-08-06 07:01:03.089328+00	5	3
 \.
 
 
@@ -924,9 +930,9 @@ COPY public.socialaccount_socialtoken (id, token, token_secret, expires_at, acco
 -- Data for Name: users_customuser; Type: TABLE DATA; Schema: public; Owner: beautipong
 --
 
-COPY public.users_customuser (id, password, last_login, is_superuser, nickname, "userID", "oauthID", score, image, is_active, is_staff, date_joined, email) FROM stdin;
-3	!cazSHP29XH7zWISpb6MyLRUe9ThWBg4pwQ5wnLZs	\N	f	test	testID	\N	1000		t	f	2024-08-04 00:42:56.81734+00	dongseo@student.42seoul.kr
-5	!0uPtzPoQ4B8zxeM19OonX09mN325eAFkdV8dGsGj	\N	f	test2	testID2	\N	1200		t	f	2024-08-04 00:43:38.397201+00	west.east1832@gmail.com
+COPY public.users_customuser (id, password, last_login, is_superuser, nickname, "userID", "oauthID", score, image, is_active, is_staff, date_joined, email, match_cnt, win_cnt) FROM stdin;
+3	!cazSHP29XH7zWISpb6MyLRUe9ThWBg4pwQ5wnLZs	\N	f	test	testID	\N	1000		t	f	2024-08-04 00:42:56.81734+00	dongseo@student.42seoul.kr	0	0
+5	!0uPtzPoQ4B8zxeM19OonX09mN325eAFkdV8dGsGj	\N	f	test2	testID2	\N	1200		t	f	2024-08-04 00:43:38.397201+00	west.east1832@gmail.com	0	0
 \.
 
 
@@ -1006,7 +1012,7 @@ SELECT pg_catalog.setval('public.django_content_type_id_seq', 19, true);
 -- Name: django_migrations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: beautipong
 --
 
-SELECT pg_catalog.setval('public.django_migrations_id_seq', 43, true);
+SELECT pg_catalog.setval('public.django_migrations_id_seq', 45, true);
 
 
 --
@@ -1020,7 +1026,7 @@ SELECT pg_catalog.setval('public.friend_friend_id_seq', 1, false);
 -- Name: game_game_id_seq; Type: SEQUENCE SET; Schema: public; Owner: beautipong
 --
 
-SELECT pg_catalog.setval('public.game_game_id_seq', 1, false);
+SELECT pg_catalog.setval('public.game_game_id_seq', 2, true);
 
 
 --
@@ -1351,6 +1357,14 @@ ALTER TABLE ONLY public.users_customuser
 
 
 --
+-- Name: users_customuser users_customuser_userID_41614333_uniq; Type: CONSTRAINT; Schema: public; Owner: beautipong
+--
+
+ALTER TABLE ONLY public.users_customuser
+    ADD CONSTRAINT "users_customuser_userID_41614333_uniq" UNIQUE ("userID");
+
+
+--
 -- Name: users_customuser_user_permissions users_customuser_user_pe_customuser_id_permission_7a7debf6_uniq; Type: CONSTRAINT; Schema: public; Owner: beautipong
 --
 
@@ -1595,6 +1609,13 @@ CREATE INDEX users_customuser_groups_group_id_01390b14 ON public.users_customuse
 --
 
 CREATE INDEX users_customuser_nickname_ecc84e12_like ON public.users_customuser USING btree (nickname varchar_pattern_ops);
+
+
+--
+-- Name: users_customuser_userID_41614333_like; Type: INDEX; Schema: public; Owner: beautipong
+--
+
+CREATE INDEX "users_customuser_userID_41614333_like" ON public.users_customuser USING btree ("userID" varchar_pattern_ops);
 
 
 --
