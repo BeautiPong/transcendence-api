@@ -8,8 +8,8 @@ class ScoreHistorySerializer(serializers.ModelSerializer):
 
 class UserRankingSerializer(serializers.Serializer):
     nickname = serializers.CharField(max_length=30)
-    match_cnts = serializers.IntegerField()
-    win_cnts = serializers.IntegerField()
+    match_cnt = serializers.IntegerField()
+    win_cnt = serializers.IntegerField()
     score = serializers.IntegerField()
     rank = serializers.IntegerField()
 
