@@ -17,6 +17,9 @@ from django.http                                import JsonResponse
 import urllib.parse
 import requests
 
+from users.utils import get_user_info
+
+
 # Create your views here.
 def get_code(request): 
     client_id = 'u-s4t2ud-5165cfc59957b2a5cd674a6fc909e1e94378eff8b68d30144cbf571ed0b80ea1'
@@ -153,17 +156,13 @@ class UserProfileView(APIView):
         )
         return response
 
-
-
 class UserInfoView(APIView):
     def get(self, request, nickname):
-        try:
-            user = CustomUser.objects.get(nickname=nickname)
-        except CustomUser.DoesNotExist:
+        user_data = get_user_info(nickname)
+        if user_data is None:
             return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        user_serializer = UserInfoSerializer(user)
-        return Response(user_serializer.data, status=status.HTTP_200_OK)
+        return Response(user_data, status=status.HTTP_200_OK)
 
 class UserRankingView(APIView):
     def get(self, request, nickname):
