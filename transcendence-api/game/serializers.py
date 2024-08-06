@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from game.models import Game
+from .models import Game
 
 class GameScoreHistorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -17,3 +17,8 @@ class GameScoreHistorySerializer(serializers.ModelSerializer):
         )
         game2.save()
         return game1
+
+class GameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Game
+        fields = ['user1_score', 'user2_score', 'create_time', 'user1', 'user2']
