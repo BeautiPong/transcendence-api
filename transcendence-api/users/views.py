@@ -1,33 +1,29 @@
 from django.http import JsonResponse
 
-import requests
+from rest_framework_simplejwt.authentication    import JWTAuthentication
+from rest_framework_simplejwt.serializers       import *
+from rest_framework_simplejwt.exceptions        import InvalidToken, TokenError
+from rest_framework_simplejwt.views             import TokenRefreshView
+from django.views.decorators.csrf               import csrf_exempt
+from django.contrib.auth.hashers                import check_password
+from rest_framework.permissions                 import IsAuthenticated
+from rest_framework.response                    import Response
+from rest_framework.views                       import APIView
+from rest_framework                             import status
+from users.models                               import CustomUser
+from django.http                                import HttpResponseRedirect
+from django.http                                import JsonResponse
 import urllib.parse
-from users.models import CustomUser
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework_simplejwt.serializers import *
-from rest_framework import status
-from django.contrib.auth.hashers import check_password
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from django.http import HttpResponseRedirect
-from django.http import JsonResponse
-
+import requests
 
 # Create your views here.
 def get_code(request): 
     client_id = 'u-s4t2ud-5165cfc59957b2a5cd674a6fc909e1e94378eff8b68d30144cbf571ed0b80ea1'
     redirect_uri = 'http://localhost:8000/'
     response_type = 'code'
-    
     oauth_url = f'https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={urllib.parse.quote(redirect_uri)}&response_type={response_type}'
     
     return HttpResponseRedirect(oauth_url) # redirect to 42 login page
-
-
-
-import requests
-from django.http import JsonResponse
 
 def get_token(request):
     code = request.GET.get('code')  # 유저가 받은 코드를 여기에 입력합니다.
@@ -54,29 +50,20 @@ def get_token(request):
     # 응답 데이터 처리
     if response.status_code == 200:
         ft_access_token = response.json().get('access_token')
-
     else:
-        return JsonResponse({'error': 'Failed to obtain access token'}, status=response.status_code)
+        return JsonResponse({'error': 'Failed to obtain access token'}, 
+                            status=response.status_code)
 
     user_url = 'https://api.intra.42.fr/v2/me'
     headers = {
         'Authorization': f'Bearer {ft_access_token}',
     }
-
     response = requests.get(user_url, headers=headers)
     response_data = response.json()
-    print("response_data=", response_data)
-
-    # ft_access_token = request.headers.get('accessToken')
-    print("ft_access_token=", ft_access_token)
-
     intra_id =  response_data.get('login')
     email = response_data.get('email')
     image = response_data.get('image.list')
     
-    print("intra_id=", intra_id)
-
-
     user = CustomUser.objects.filter(oauthID=intra_id).first()
     if user :        
         response = JsonResponse({"message": "로그인 성공."}
@@ -86,11 +73,9 @@ def get_token(request):
         response = JsonResponse({ "message": "42user 회원가입 성공!"}
                                 , status = status.HTTP_201_CREATED)
         
-    print("user=", user)
     token = TokenObtainPairSerializer.get_token(user)  # refresh token 생성
     refresh_token = str(token)
     access_token = str(token.access_token)  # access token 생성
-
     response.set_cookie("access_token", access_token, httponly=True)
     response.set_cookie("refresh_token", refresh_token, httponly=True)
     return response
@@ -106,24 +91,13 @@ def join (request) :
     # 사용자가 이미 회원가입을 했는지 확인
     user = CustomUser.objects.filter(userID=userID).first()
     if user :
-        response = JsonResponse(
-            {
-                "message": "이미 회원가입 된 회원입니다."
-            },
-            status = status.HTTP_200_OK
-        )
-
+        response = JsonResponse({"message": "이미 회원가입 된 회원입니다."},
+            status = status.HTTP_202_Accepted)
     else :
         # 사용자 생성 후 DB에 저장
         CustomUser.objects.create_user(userID=userID, password=password,nickname=nickname)
-        
-        response = JsonResponse(
-            {
-                "message": "회원가입 성공!"
-            },
-            status = status.HTTP_200_OK
-        )
-    
+        response = JsonResponse({"message": "회원가입 성공!"},
+            status = status.HTTP_200_OK)
     return response
 
 # 자체 로그인
@@ -134,13 +108,11 @@ def login (request) :
         password = request.POST.get('password')
 
         user = CustomUser.objects.filter(userID=userID).first()
-
         # user가 DB에 있고 비밀번호가 맞다면
         if user and check_password(password, user.password):
             token = TokenObtainPairSerializer.get_token(user)  # refresh token 생성
             refresh_token = str(token)
             access_token = str(token.access_token)  # access token 생성
-
             response = JsonResponse (
                 {
                     "message": "로그인 성공",
@@ -153,7 +125,6 @@ def login (request) :
             )
             response.set_cookie("access_token", access_token, httponly=True)
             response.set_cookie("refresh_token", refresh_token, httponly=True)
-
         else :
             response = JsonResponse (
                 {
@@ -161,10 +132,9 @@ def login (request) :
                 },
                 status = status.HTTP_401_UNAUTHORIZED
             )
-
         return response
 
-        
+
 # 로그인된 사용자 정보 반환
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
@@ -172,7 +142,6 @@ class UserProfileView(APIView):
 
     def get(self, request):
         user = request.user
-
         response = JsonResponse(
             {
                 "user id" : user.id,
