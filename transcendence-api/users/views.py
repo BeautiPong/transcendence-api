@@ -36,7 +36,6 @@ def get_token(request):
     redirect_uri = 'http://localhost:8000/'  # 이전에 사용한 리디렉션 URL
     grant_type = 'authorization_code'
     scope = 'public profile'  # 42에서 제공한 스코프
-
     token_url = 'https://api.intra.42.fr/oauth/token'
     
     # 액세스 토큰 요청을 위한 데이터
@@ -69,6 +68,8 @@ def get_token(request):
 
     response = requests.get(user_url, headers=headers)
     response_data = response.json()
+
+
     return JsonResponse(response_data)
 
 def get_user_info(request):
@@ -80,8 +81,20 @@ def get_user_info(request):
 
     response = requests.get(user_url, headers=headers)
     response_data = response.json()
-    return JsonResponse(response_data)
 
+    intra_id =  response_data.get('id')
+    email = response_data.get('email')
+    image = response_data.get('image.list')
+    user = CustomUser.objects.filter(oauthID=intra_id).first()
+    if user :
+        response = JsonResponse({"message": "이미 회원가입 된 회원입니다."}
+                                , status = status.HTTP_200_OK)
+        
+    else :
+        CustomUser.objects.create_user(oauthID=intra_id, email=email, image=image)
+        response = JsonResponse({ "message": "회원가입 성공!"}
+                                , status = status.HTTP_201_CREATED)
+    return JsonResponse(response_data)
 
 # 회원가입
 @csrf_exempt
