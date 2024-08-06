@@ -13,5 +13,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     path('otp/', include("otp.urls")),
-    path('user/', include('users.urls'))
+    path('user/', include('users.urls')),
+    path('score/', include('scoreHistory.urls')),
 ]

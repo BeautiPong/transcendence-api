@@ -39,6 +39,3 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = 'nickname'
     REQUIRED_FIELDS = []
-
-    def __str__(self):
-        return self.nickname
