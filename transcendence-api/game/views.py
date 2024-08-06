@@ -17,8 +17,8 @@ class SaveGameView(APIView):
             return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
         game_data = {
-            'user1': user1,
-            'user2': user2,
+            'user1': user1.id,
+            'user2': user2.id,
             'user1_score': data['user1_score'],
             'user2_score': data['user2_score']
         }
@@ -29,7 +29,7 @@ class SaveGameView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-      
+
 class RecentGamesView(APIView):
     def get(self, request, nickname):
         try:
