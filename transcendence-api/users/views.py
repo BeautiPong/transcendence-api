@@ -153,8 +153,6 @@ class UserProfileView(APIView):
         )
         return response
 
-
-
 class UserInfoView(APIView):
     def get(self, request, nickname):
         try:
