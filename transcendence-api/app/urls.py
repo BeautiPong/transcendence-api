@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from users.views import *
 
 from rest_framework_simplejwt.views import (
@@ -7,7 +7,6 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
     TokenVerifyView,
 )
-from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -15,4 +14,5 @@ urlpatterns = [
     path('otp/', include("otp.urls")),
     path('user/', include('users.urls')),
     path('score/', include('scoreHistory.urls')),
+    path('game/', include('game.urls')),
 ]
