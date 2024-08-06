@@ -5,13 +5,15 @@ import urllib.parse
 from users.models import CustomUser
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework_simplejwt.serializers import *
-from rest_framework import status, generics
+from rest_framework import status
 from django.contrib.auth.hashers import check_password
 from rest_framework.views import APIView
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.http import HttpResponseRedirect
 from django.http import JsonResponse
+from users.serializers import UserInfoSerializer
 
 
 # Create your views here.
@@ -155,7 +157,7 @@ def login (request) :
         return response
 
         
-# 로그인된 사용자 정보 반환
+# 사용자 정보 반환
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
@@ -180,14 +182,14 @@ class UserProfileView(APIView):
         return response
 
 # 사용자 정보 수정
-class UserProfileUpdateView(generics.UpdateAPIView):
-    # queryset = UserProfile.objects.all()
-    # serializer_class = UserProfileSerializer
+class UserProfileUpdateView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
-
-    def get_object(self, request):
+    def put(self, request):
         # 현재 로그인된 사용자의 UserProfile을 가져옵니다.
-        user = request.user
+        serializer = UserInfoSerializer(request.user, data=request.data, partial=True)  # partial=True allows partial updates
 
-        return UserProfile.objects.get(user=self.request.user)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
