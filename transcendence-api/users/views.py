@@ -30,7 +30,7 @@ import requests
 from django.http import JsonResponse
 
 def get_token(request):
-    code = 'dbcc26b5ec2f01b58cb7ed741d4c08058ef728b36227c5872fa0fdf6204020ed'  # 유저가 받은 코드를 여기에 입력합니다.
+    code = request.GET.get('code')  # 유저가 받은 코드를 여기에 입력합니다.
     client_id = 'u-s4t2ud-5165cfc59957b2a5cd674a6fc909e1e94378eff8b68d30144cbf571ed0b80ea1'  # 42에서 제공한 클라이언트 ID
     client_secret = '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'  # 42에서 제공한 클라이언트 시크릿
     redirect_uri = 'http://localhost:8000/'  # 이전에 사용한 리디렉션 URL
@@ -53,48 +53,47 @@ def get_token(request):
     
     # 응답 데이터 처리
     if response.status_code == 200:
-        access_token = response.json().get('access_token')
-    #     return JsonResponse({'access_token': access_token})
-    # else:
-    #     return JsonResponse({'error': 'Failed to obtain access token'}, status=response.status_code)
+        ft_access_token = response.json().get('access_token')
 
-    # response_data = response.json()
-    # return JsonResponse(response_data)
+    else:
+        return JsonResponse({'error': 'Failed to obtain access token'}, status=response.status_code)
 
     user_url = 'https://api.intra.42.fr/v2/me'
     headers = {
-        'Authorization': f'Bearer {access_token}',
+        'Authorization': f'Bearer {ft_access_token}',
     }
 
     response = requests.get(user_url, headers=headers)
     response_data = response.json()
+    print("response_data=", response_data)
 
+    # ft_access_token = request.headers.get('accessToken')
+    print("ft_access_token=", ft_access_token)
 
-    return JsonResponse(response_data)
-
-def get_user_info(request):
-    access_token = request.headers.get('accessToken')
-    user_url = 'https://api.intra.42.fr/v2/me'
-    headers = {
-        'Authorization': f'Bearer {access_token}',
-    }
-
-    response = requests.get(user_url, headers=headers)
-    response_data = response.json()
-
-    intra_id =  response_data.get('id')
+    intra_id =  response_data.get('login')
     email = response_data.get('email')
     image = response_data.get('image.list')
+    
+    print("intra_id=", intra_id)
+
+
     user = CustomUser.objects.filter(oauthID=intra_id).first()
-    if user :
-        response = JsonResponse({"message": "이미 회원가입 된 회원입니다."}
+    if user :        
+        response = JsonResponse({"message": "로그인 성공."}
                                 , status = status.HTTP_200_OK)
-        
     else :
-        CustomUser.objects.create_user(oauthID=intra_id, email=email, image=image)
-        response = JsonResponse({ "message": "회원가입 성공!"}
+        user = CustomUser.objects.create_ft_user(oauthID=intra_id, email=email, image=image)
+        response = JsonResponse({ "message": "42user 회원가입 성공!"}
                                 , status = status.HTTP_201_CREATED)
-    return JsonResponse(response_data)
+        
+    print("user=", user)
+    token = TokenObtainPairSerializer.get_token(user)  # refresh token 생성
+    refresh_token = str(token)
+    access_token = str(token.access_token)  # access token 생성
+
+    response.set_cookie("access_token", access_token, httponly=True)
+    response.set_cookie("refresh_token", refresh_token, httponly=True)
+    return response
 
 # 회원가입
 @csrf_exempt
