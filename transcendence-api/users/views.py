@@ -4,6 +4,7 @@ import requests
 import urllib.parse
 from users.models import CustomUser
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework.response import Response
 from rest_framework_simplejwt.serializers import *
 from rest_framework import status
 from django.contrib.auth.hashers import check_password
@@ -12,6 +13,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.http import HttpResponseRedirect
 from django.http import JsonResponse
+
+from users.serializers import UserInfoSerializer, UserRankingSerializer
 
 
 # Create your views here.
@@ -170,3 +173,36 @@ class UserProfileView(APIView):
             status = status.HTTP_200_OK
         )
         return response
+
+
+
+class UserInfoView(APIView):
+    def get(self, request, nickname):
+        try:
+            user = CustomUser.objects.get(nickname=nickname)
+        except CustomUser.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        user_serializer = UserInfoSerializer(user)
+        return Response(user_serializer.data, status=status.HTTP_200_OK)
+
+class UserRankingView(APIView):
+    def get(self, request, nickname):
+        try:
+            user = CustomUser.objects.get(nickname=nickname)
+        except CustomUser.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        users = CustomUser.objects.all().order_by('-score')
+        user_rank = None
+
+        for idx, u in enumerate(users):
+            rank = idx + 1
+            if u.id == user.id:
+                user_rank = {
+                    'rank': rank
+                }
+                break
+
+        user_rank_serializer = UserRankingSerializer(user_rank)
+        return Response(user_rank_serializer.data, status=status.HTTP_200_OK)
