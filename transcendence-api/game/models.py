@@ -1,8 +1,6 @@
 from django.db import models
 from users.models import CustomUser
 
-# Create your models here.
-
 class Game(models.Model) :
     user1_score = models.BigIntegerField()
     user2_score = models.BigIntegerField()
