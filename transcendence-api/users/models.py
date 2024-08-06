@@ -33,17 +33,16 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     nickname = models.CharField(max_length=30, unique=True)
     userID = models.CharField(max_length=30, blank=True, null=True, unique=True)
     oauthID = models.CharField(max_length=30, blank=True, null=True)
-    score = models.IntegerField(default=0)
+    score = models.IntegerField(default=1000)
     image = models.ImageField(upload_to='profile_pics', null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
     email = models.EmailField(unique=True)
+    match_cnt = models.IntegerField(default=0)
+    win_cnt = models.IntegerField(default=0)
 
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'nickname'
     REQUIRED_FIELDS = []
-
-    def __str__(self):
-        return self.nickname

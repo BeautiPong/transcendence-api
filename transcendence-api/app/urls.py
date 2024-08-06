@@ -12,9 +12,7 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    path('join/', join, name='signup'),
-    path('login/', login, name='login'),
-    path('api/profile/', UserProfileView.as_view(), name='user_profile'),
     path('otp/', include("otp.urls")),
-    path('user/', include('users.urls'))
+    path('user/', include('users.urls')),
+    path('score/', include('scoreHistory.urls')),
 ]

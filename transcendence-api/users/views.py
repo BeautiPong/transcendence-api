@@ -9,6 +9,7 @@ from django.contrib.auth.hashers                import check_password
 from rest_framework.permissions                 import IsAuthenticated
 from rest_framework.response                    import Response
 from rest_framework.views                       import APIView
+from users.serializers                          import UserInfoSerializer, UserRankingSerializer
 from rest_framework                             import status
 from users.models                               import CustomUser
 from django.http                                import HttpResponseRedirect
@@ -87,6 +88,7 @@ def join (request) :
         userID = request.POST.get('userID')   # 로그인 시 필요한 아이디 (고유)
         password = request.POST.get('password') # 로그인 시 필요한 비밀번호
         nickname = request.POST.get('nickname') # 사용자 닉네임 (고유)
+        email = request.POST.get('email')  # 이메일
 
     # 사용자가 이미 회원가입을 했는지 확인
     user = CustomUser.objects.filter(userID=userID).first()
@@ -150,3 +152,36 @@ class UserProfileView(APIView):
             status = status.HTTP_200_OK
         )
         return response
+
+
+
+class UserInfoView(APIView):
+    def get(self, request, nickname):
+        try:
+            user = CustomUser.objects.get(nickname=nickname)
+        except CustomUser.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        user_serializer = UserInfoSerializer(user)
+        return Response(user_serializer.data, status=status.HTTP_200_OK)
+
+class UserRankingView(APIView):
+    def get(self, request, nickname):
+        try:
+            user = CustomUser.objects.get(nickname=nickname)
+        except CustomUser.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        users = CustomUser.objects.all().order_by('-score')
+        user_rank = None
+
+        for idx, u in enumerate(users):
+            rank = idx + 1
+            if u.id == user.id:
+                user_rank = {
+                    'rank': rank
+                }
+                break
+
+        user_rank_serializer = UserRankingSerializer(user_rank)
+        return Response(user_rank_serializer.data, status=status.HTTP_200_OK)

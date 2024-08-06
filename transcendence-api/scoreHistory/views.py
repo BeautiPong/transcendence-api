@@ -1,3 +1,32 @@
-from django.shortcuts import render
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from users.models import CustomUser
+from scoreHistory.models import ScoreHistory
+from .serializers import OverallRankingSerializer, ScoreHistorySerializer
 
-# Create your views here.
+class OverallRankingsView(APIView):
+    def get(self, request):
+        users = CustomUser.objects.all().order_by('-score')
+        overall_rankings = []
+
+        for idx, user in enumerate(users):
+            rank = idx + 1
+            overall_rankings.append({
+                'nickname': user.nickname,
+                'rank': rank
+            })
+
+        overall_serializer = OverallRankingSerializer(overall_rankings, many=True)
+        return Response(overall_serializer.data, status=status.HTTP_200_OK)
+
+class UserScoreHistoryView(APIView):
+    def get(self, request, nickname):
+        try:
+            user = CustomUser.objects.get(nickname=nickname)
+        except CustomUser.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        score_history = ScoreHistory.objects.filter(user=user).order_by('create_time')
+        serializer = ScoreHistorySerializer(score_history, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
