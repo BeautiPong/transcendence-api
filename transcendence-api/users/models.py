@@ -10,6 +10,13 @@ class CustomUserManager(BaseUserManager):
         user.set_password(password)
         user.save(using=self._db)
         return user
+    
+    def create_ft_user(self, oauthID, email, image, **extra_fields):
+        if not oauthID:
+            raise ValueError(_('The userId field must be set'))
+        user = self.model(oauthID=oauthID, email = email, image = image, **extra_fields)
+        user.save(using=self._db)
+        return user
 
     def create_superuser(self, nickname, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
