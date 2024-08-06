@@ -4,7 +4,7 @@ from .models import Game
 class GameScoreHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Game
-        fields = '__all__'
+        fields = ['user1', 'user2', 'user1_score', 'user2_score']
 
     def create(self, validated_data):
         game1 = Game(**validated_data)
@@ -17,6 +17,7 @@ class GameScoreHistorySerializer(serializers.ModelSerializer):
         )
         game2.save()
         return game1
+
 
 class GameSerializer(serializers.ModelSerializer):
     class Meta:
