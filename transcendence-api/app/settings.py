@@ -121,6 +121,12 @@ SIMPLE_JWT = {
     'TOKEN_TYPE_CLAIM': 'token_type',
 }
 
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'users.views.CustomPasswordValidator',
+    },
+]
+
 EMAIL_BACKEND = 'backends.CustomEmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
