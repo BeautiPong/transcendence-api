@@ -15,3 +15,7 @@ class UserInfoSerializer(serializers.ModelSerializer):
 
 class UserRankingSerializer(serializers.Serializer):
     rank = serializers.IntegerField()
+
+class UserRankingSerializer(serializers.Serializer):
+    rank = serializers.IntegerField()
+
