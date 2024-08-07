@@ -147,20 +147,13 @@ class UserProfileView(APIView):
 
     def get(self, request):
         user = request.user
-        image_url = user.image.url if user.image else None
+        serializer = UserInfoSerializer(user, context={'request': request})
+
         win_rate = user.win_cnt / user.match_cnt * 100 if user.match_cnt != 0 else 0
-        response = JsonResponse(
-            {
-                "username" : user.nickname,
-                "email" : user.email,
-                "profile_img" : image_url,
-                "match_cnt" : user.match_cnt,
-                "win_cnt" : user.win_cnt,
-                "win_rate" : win_rate,
-            },
-            status = status.HTTP_200_OK
-        )
-        return response
+        response_data = serializer.data
+        response_data['win_rate'] = win_rate
+
+        return Response(response_data, status=status.HTTP_200_OK)
 
 # 사용자 정보 수정
 class UserProfileUpdateView(APIView):
