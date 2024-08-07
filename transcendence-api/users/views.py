@@ -8,6 +8,7 @@ from django.views.decorators.csrf               import csrf_exempt
 from django.contrib.auth.hashers                import check_password
 from rest_framework.permissions                 import IsAuthenticated
 from rest_framework.response                    import Response
+from django.core.exceptions                     import ValidationError
 from rest_framework.views                       import APIView
 from users.serializers                          import UserInfoSerializer, UserRankingSerializer
 from rest_framework                             import status
@@ -17,6 +18,7 @@ from django.http                                import JsonResponse
 import urllib.parse
 from rest_framework.permissions import IsAuthenticated
 import requests
+import re
 from users.utils import get_user_info
 
 
@@ -85,26 +87,58 @@ def get_token(request):
     response.set_cookie("refresh_token", refresh_token, httponly=True)
     return response
 
+class CustomPasswordValidator:
+    def validate(self, password):
+        if not re.search(r'[A-Z]', password):  # 대문자가 하나 이상 포함되어야 함
+            raise ValidationError("비밀번호는 대문자를 포함해야 합니다.")
+        if not re.search(r'[a-z]', password):  # 소문자가 하나 이상 포함되어야 함
+            raise ValidationError("비밀번호는 소문자를 포함해야 합니다.")
+        if not re.search(r'\d', password):  # 숫자가 하나 이상 포함되어야 함
+            raise ValidationError("비밀번호는 숫자를 포함해야 합니다.")
+        if not re.search(r'[@$!%*?&]', password):  # 특수 문자가 하나 이상 포함되어야 함
+            raise ValidationError("비밀번호는 특수 문자를 포함해야 합니다.")
+
+    def get_help_text(self):
+        return "비밀번호는 대문자, 소문자, 숫자 및 특수 문자를 포함해야 합니다."
+
 # 회원가입
 @csrf_exempt
 def join (request) :
     if request.method == 'POST' :
         userID = request.POST.get('userID')   # 로그인 시 필요한 아이디 (고유)
-        password = request.POST.get('password') # 로그인 시 필요한 비밀번호
+        password = request.POST.get('password') # 로그인 시 필요한 비밀번호 (null X)
         nickname = request.POST.get('nickname') # 사용자 닉네임 (고유)
-        email = request.POST.get('email')  # 이메일
+        email = request.POST.get('email')  # 이메일 (고유))
+
+    # 유효성 검사
+    user = CustomUser.objects.filter(nickname=nickname).first()
+    if user :
+        return JsonResponse({"message": "이미 존재하는 닉네임입니다."},
+            status = status.HTTP_400_BAD_REQUEST)
+    
+    user = CustomUser.objects.filter(email=email).first()
+    if user :
+        return JsonResponse({"message": "이미 존재하는 이메일입니다."},
+            status = status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        validator = CustomPasswordValidator()
+        validator.validate(password=password)
+    except ValidationError as e:
+        return JsonResponse({"errors": e.messages}, 
+            status=status.HTTP_400_BAD_REQUEST)
+
 
     # 사용자가 이미 회원가입을 했는지 확인
     user = CustomUser.objects.filter(userID=userID).first()
     if user :
-        response = JsonResponse({"message": "이미 회원가입 된 회원입니다."},
+        return JsonResponse({"message": "이미 가입 된 회원입니다."},
             status = status.HTTP_202_ACCEPTED)
     else :
         # 사용자 생성 후 DB에 저장
         CustomUser.objects.create_user(userID=userID, password=password,nickname=nickname, email=email)
-        response = JsonResponse({"message": "회원가입 성공!"},
+        return JsonResponse({"message": "회원가입 성공!"},
             status = status.HTTP_200_OK)
-    return response
 
 # 자체 로그인
 @csrf_exempt
