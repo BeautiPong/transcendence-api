@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'users',
     'chattingRoom',
     'friend',
@@ -119,6 +120,8 @@ SIMPLE_JWT = {
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
     'TOKEN_TYPE_CLAIM': 'token_type',
+    'BLACKLIST_AFTER_ROTATION': True,
+    'BLACKLIST_APP': 'blacklist',
 }
 
 AUTH_PASSWORD_VALIDATORS = [
