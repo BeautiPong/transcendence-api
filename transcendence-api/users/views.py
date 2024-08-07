@@ -19,6 +19,7 @@ import urllib.parse
 from rest_framework.permissions import IsAuthenticated
 import requests
 import re
+import json
 from users.utils import get_user_info
 
 
@@ -107,10 +108,11 @@ class CustomPasswordValidator:
 @csrf_exempt
 def join (request) :
     if request.method == 'POST' :
-        userID = request.POST.get('userID')   # 로그인 시 필요한 아이디 (고유)
-        password = request.POST.get('password') # 로그인 시 필요한 비밀번호 (null X)
-        nickname = request.POST.get('nickname') # 사용자 닉네임 (고유)
-        email = request.POST.get('email')  # 이메일 (고유))
+        data = json.loads(request.body)
+        userID = data.get('userID')   # 로그인 시 필요한 아이디 (고유)
+        password = data.get('password')  # 로그인 시 필요한 비밀번호 (null X)
+        nickname = data.get('nickname')  # 사용자 닉네임 (고유)
+        email = data.get('email')  # 이메일 (고유))
 
     # 유효성 검사
     user = CustomUser.objects.filter(nickname=nickname).first()
@@ -146,8 +148,9 @@ def join (request) :
 @csrf_exempt
 def login (request) :
     if request.method == 'POST' :
-        userID = request.POST.get('userID')
-        password = request.POST.get('password')
+        data = json.loads(request.body)
+        userID = data.get('userID')
+        password = data.get('password')
 
         user = CustomUser.objects.filter(userID=userID).first()
         # user가 DB에 있고 비밀번호가 맞다면
