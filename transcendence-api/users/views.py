@@ -242,9 +242,14 @@ class UserRankingView(APIView):
         for idx, u in enumerate(users):
             rank = idx + 1
             if u.id == user.id:
-                user_rank = {
-                    'rank': rank
-                }
+                if u.match_cnt == 0:
+                    user_rank = {
+                        'rank': 'null'
+                    }
+                else:
+                    user_rank = {
+                        'rank': rank
+                    }
                 break
 
         user_rank_serializer = UserRankingSerializer(user_rank)
