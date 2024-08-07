@@ -6,50 +6,45 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.authentication import JWTAuthentication
-
-from users.models import CustomUser
 from .models import OTP
-from .serializers import RequestOTPSerializer, VerifyOTPSerializer
+from .serializers import VerifyOTPSerializer
+
 
 class RequestOTPView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
     def post(self, request):
-        serializer = RequestOTPSerializer(data=request.data)
-        if serializer.is_valid():
-            email = serializer.validated_data['email']
-            user = CustomUser.objects.filter(email=email).first()
-            if not user:
-                return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+        user = request.user
+        if not user:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
-            otp = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-            OTP.objects.create(user=user, otp=otp)
+        otp = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        OTP.objects.create(user=user, otp=otp)
 
-            send_mail(
-                'Your OTP Code',
-                f'Your OTP code is {otp}',
-                'beautipong@gmail.com',
-                [email],
-                fail_silently=False,
-            )
+        send_mail(
+            'Your OTP Code',
+            f'Your OTP code is {otp}',
+            'beautipong@gmail.com',
+            [user.email],
+            fail_silently=False,
+        )
 
-            return Response({"message": "OTP sent successfully"}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"message": "OTP sent successfully"}, status=status.HTTP_200_OK)
+
 
 class VerifyOTPView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
     def post(self, request):
+        user = request.user
+        if not user:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
         serializer = VerifyOTPSerializer(data=request.data)
         if serializer.is_valid():
-            email = serializer.validated_data['email']
             otp_code = serializer.validated_data['otp']
-
-            user = CustomUser.objects.filter(email=email).first()
-            if not user:
-                return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
             otp_instance = OTP.objects.filter(user=user).last()
             if not otp_instance:
