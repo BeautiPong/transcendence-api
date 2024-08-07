@@ -34,7 +34,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     userID = models.CharField(max_length=30, blank=True, null=True, unique=True)
     oauthID = models.CharField(max_length=30, blank=True, null=True)
     score = models.IntegerField(default=1000)
-    image = models.ImageField(upload_to='profile_pics', null=True, blank=True)
+    image = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)

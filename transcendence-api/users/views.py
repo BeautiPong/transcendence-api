@@ -15,12 +15,13 @@ from users.models                               import CustomUser
 from django.http                                import HttpResponseRedirect
 from django.http                                import JsonResponse
 import urllib.parse
+from rest_framework.permissions import IsAuthenticated
 import requests
-
 from users.utils import get_user_info
 
 
 # Create your views here.
+
 def get_code(request): 
     client_id = 'u-s4t2ud-5165cfc59957b2a5cd674a6fc909e1e94378eff8b68d30144cbf571ed0b80ea1'
     redirect_uri = 'http://localhost:8000/'
@@ -138,23 +139,41 @@ def login (request) :
                 status = status.HTTP_401_UNAUTHORIZED
             )
         return response
-
-
-# 로그인된 사용자 정보 반환
+        
+# 사용자 정보 반환
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
     def get(self, request):
         user = request.user
+        image_url = user.image.url if user.image else None
+        win_rate = user.win_cnt / user.match_cnt * 100 if user.match_cnt != 0 else 0
         response = JsonResponse(
             {
-                "user id" : user.id,
                 "username" : user.nickname,
+                "email" : user.email,
+                "profile_img" : image_url,
+                "match_cnt" : user.match_cnt,
+                "win_cnt" : user.win_cnt,
+                "win_rate" : win_rate,
             },
             status = status.HTTP_200_OK
         )
         return response
+
+# 사용자 정보 수정
+class UserProfileUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    def put(self, request):
+        # 현재 로그인된 사용자의 UserProfile을 가져옵니다.
+        serializer = UserInfoSerializer(request.user, data=request.data, partial=True)  # partial=True allows partial updates
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserInfoView(APIView):
     permission_classes = [IsAuthenticated]
@@ -190,3 +209,4 @@ class UserRankingView(APIView):
 
         user_rank_serializer = UserRankingSerializer(user_rank)
         return Response(user_rank_serializer.data, status=status.HTTP_200_OK)
+

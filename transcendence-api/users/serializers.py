@@ -7,5 +7,15 @@ class UserInfoSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['nickname', 'image', 'match_cnt', 'win_cnt', 'score', 'is_active']
 
+    def update(self, instance, validated_data):
+        instance.nickname = validated_data.get('nickname', instance.nickname)
+        instance.image = validated_data.get('image', instance.image)
+        instance.save()
+        return instance
+
 class UserRankingSerializer(serializers.Serializer):
     rank = serializers.IntegerField()
+
+class UserRankingSerializer(serializers.Serializer):
+    rank = serializers.IntegerField()
+

@@ -14,7 +14,6 @@ urlpatterns = [
     path('otp/', include("otp.urls")),
     path('user/', include('users.urls')),
     path('score/', include('scoreHistory.urls')),
-
     path('friend/', include("friend.urls")),
     path('game/', include('game.urls')),
 ]
