@@ -1,6 +1,9 @@
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
 from users.models import CustomUser
 from .models import Game
 from .serializers import GameSerializer
@@ -8,6 +11,9 @@ from game.serializers import GameScoreHistorySerializer
 
 
 class SaveGameView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
     def post(self, request):
         data = request.data
         try:
@@ -31,6 +37,9 @@ class SaveGameView(APIView):
 
 
 class RecentGamesView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
     def get(self, request, nickname):
         try:
             user = CustomUser.objects.get(nickname=nickname)

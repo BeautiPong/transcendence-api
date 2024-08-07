@@ -1,11 +1,17 @@
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
 from users.models import CustomUser
 from scoreHistory.models import ScoreHistory
 from .serializers import OverallRankingSerializer, ScoreHistorySerializer
 
 class OverallRankingsView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
     def get(self, request):
         users = CustomUser.objects.all().order_by('-score')
         overall_rankings = []
@@ -21,6 +27,9 @@ class OverallRankingsView(APIView):
         return Response(overall_serializer.data, status=status.HTTP_200_OK)
 
 class UserScoreHistoryView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
     def get(self, request, nickname):
         try:
             user = CustomUser.objects.get(nickname=nickname)
