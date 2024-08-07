@@ -9,11 +9,13 @@ from rest_framework_simplejwt.views import (
 )
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('api/admin/', admin.site.urls),
 
-    path('otp/', include("otp.urls")),
-    path('user/', include('users.urls')),
-    path('score/', include('scoreHistory.urls')),
-    path('friend/', include("friend.urls")),
-    path('game/', include('game.urls')),
+
+    path('api/otp/', include("otp.urls")),
+    path('api/user/', include('users.urls')),
+    path('api/score/', include('scoreHistory.urls')),
+
+    path('api/friend/', include("friend.urls")),
+    path('api/game/', include('game.urls')),
 ]
