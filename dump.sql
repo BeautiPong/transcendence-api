@@ -551,7 +551,7 @@ CREATE TABLE public.users_customuser (
     "userID" character varying(30),
     "oauthID" character varying(30),
     score integer NOT NULL,
-    image character varying(100),
+    image text,
     is_active boolean NOT NULL,
     is_staff boolean NOT NULL,
     date_joined timestamp with time zone NOT NULL,
@@ -848,6 +848,7 @@ COPY public.django_migrations (id, app, name, applied) FROM stdin;
 43	socialaccount	0006_alter_socialaccount_extra_data	2024-08-04 00:20:29.187124+00
 44	users	0002_alter_customuser_userid	2024-08-06 04:06:12.362447+00
 45	users	0003_customuser_match_cnt_customuser_win_cnt_and_more	2024-08-06 04:06:12.374029+00
+46	users	0004_alter_customuser_image	2024-08-07 07:36:14.006059+00
 \.
 
 
@@ -891,6 +892,7 @@ COPY public.message_message (id, content, created_at, room_id, sender_id) FROM s
 
 COPY public.otp_otp (id, otp, created_at, user_id) FROM stdin;
 1	3LUSKV	2024-08-04 01:41:45.32948+00	5
+2	LGHZPD	2024-08-07 07:48:55.484624+00	6
 \.
 
 
@@ -931,8 +933,9 @@ COPY public.socialaccount_socialtoken (id, token, token_secret, expires_at, acco
 --
 
 COPY public.users_customuser (id, password, last_login, is_superuser, nickname, "userID", "oauthID", score, image, is_active, is_staff, date_joined, email, match_cnt, win_cnt) FROM stdin;
-3	!cazSHP29XH7zWISpb6MyLRUe9ThWBg4pwQ5wnLZs	\N	f	test	testID	\N	1000		t	f	2024-08-04 00:42:56.81734+00	dongseo@student.42seoul.kr	0	0
-5	!0uPtzPoQ4B8zxeM19OonX09mN325eAFkdV8dGsGj	\N	f	test2	testID2	\N	1200		t	f	2024-08-04 00:43:38.397201+00	west.east1832@gmail.com	0	0
+5	1234	\N	f	test2	testID2	\N	1200		t	f	2024-08-04 00:43:38.397201+00	west123@gmail.com	0	0
+3	1234	\N	f	test	testID	\N	1000		t	f	2024-08-04 00:42:56.81734+00	123@student.42seoul.kr	0	0
+6	pbkdf2_sha256$600000$vTlzEfIkIxMMReiyPSmhmK$myFYJ84aoMZhxtnMVKXpPZ8ft6xkDdnOzbid1lqWiJg=	\N	f	dongseo	dongseo	\N	1000	\N	t	f	2024-08-07 07:47:14.567087+00	west.east1832@gmail.com	0	0
 \.
 
 
@@ -1012,7 +1015,7 @@ SELECT pg_catalog.setval('public.django_content_type_id_seq', 19, true);
 -- Name: django_migrations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: beautipong
 --
 
-SELECT pg_catalog.setval('public.django_migrations_id_seq', 45, true);
+SELECT pg_catalog.setval('public.django_migrations_id_seq', 46, true);
 
 
 --
@@ -1040,7 +1043,7 @@ SELECT pg_catalog.setval('public.message_message_id_seq', 1, false);
 -- Name: otp_otp_id_seq; Type: SEQUENCE SET; Schema: public; Owner: beautipong
 --
 
-SELECT pg_catalog.setval('public.otp_otp_id_seq', 1, true);
+SELECT pg_catalog.setval('public.otp_otp_id_seq', 2, true);
 
 
 --
@@ -1082,7 +1085,7 @@ SELECT pg_catalog.setval('public.users_customuser_groups_id_seq', 1, false);
 -- Name: users_customuser_id_seq; Type: SEQUENCE SET; Schema: public; Owner: beautipong
 --
 
-SELECT pg_catalog.setval('public.users_customuser_id_seq', 5, true);
+SELECT pg_catalog.setval('public.users_customuser_id_seq', 6, true);
 
 
 --

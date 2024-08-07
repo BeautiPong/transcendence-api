@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from scoreHistory.models import ScoreHistory
 from users.models import CustomUser
 from users.serializers import UserScoreSerializer
 from .models import Game
@@ -60,6 +61,9 @@ class SaveGameView(APIView):
             if user1_serializer.is_valid() and user2_serializer.is_valid():
                 user1_serializer.save()
                 user2_serializer.save()
+
+                ScoreHistory.objects.create(user=user1, score=user1.score)
+                ScoreHistory.objects.create(user=user2, score=user2.score)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
