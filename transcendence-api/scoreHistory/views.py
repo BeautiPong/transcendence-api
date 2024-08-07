@@ -18,10 +18,16 @@ class OverallRankingsView(APIView):
 
         for idx, user in enumerate(users):
             rank = idx + 1
-            overall_rankings.append({
-                'nickname': user.nickname,
-                'rank': rank
-            })
+            if user.match_cnt == 0:
+                overall_rankings.append({
+                    'nickname': user.nickname,
+                    'rank': 'null'
+                })
+            else:
+                overall_rankings.append({
+                    'nickname': user.nickname,
+                    'rank': rank
+                })
 
         overall_serializer = OverallRankingSerializer(overall_rankings, many=True)
         return Response(overall_serializer.data, status=status.HTTP_200_OK)
