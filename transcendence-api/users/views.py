@@ -157,6 +157,9 @@ class UserProfileView(APIView):
         return response
 
 class UserInfoView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
     def get(self, request, nickname):
         user_data = get_user_info(nickname)
         if user_data is None:
@@ -165,6 +168,9 @@ class UserInfoView(APIView):
         return Response(user_data, status=status.HTTP_200_OK)
 
 class UserRankingView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
     def get(self, request, nickname):
         try:
             user = CustomUser.objects.get(nickname=nickname)
