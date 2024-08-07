@@ -89,14 +89,16 @@ def get_token(request):
 
 class CustomPasswordValidator:
     def validate(self, password):
-        if not re.search(r'[A-Z]', password):  # 대문자가 하나 이상 포함되어야 함
-            raise ValidationError("비밀번호는 대문자를 포함해야 합니다.")
-        if not re.search(r'[a-z]', password):  # 소문자가 하나 이상 포함되어야 함
-            raise ValidationError("비밀번호는 소문자를 포함해야 합니다.")
-        if not re.search(r'\d', password):  # 숫자가 하나 이상 포함되어야 함
-            raise ValidationError("비밀번호는 숫자를 포함해야 합니다.")
-        if not re.search(r'[@$!%*?&]', password):  # 특수 문자가 하나 이상 포함되어야 함
-            raise ValidationError("비밀번호는 특수 문자를 포함해야 합니다.")
+        if len(password) < 8:
+            raise ValidationError(f"비밀번호는 최소 8글자 이상이어야 합니다.")
+        if not re.search(r'[A-Z]', password):
+            raise ValidationError("비밀번호는 대문자를 하나 이상 포함해야 합니다.")
+        if not re.search(r'[a-z]', password):
+            raise ValidationError("비밀번호는 소문자를 하나 이상 포함해야 합니다.")
+        if not re.search(r'\d', password):
+            raise ValidationError("비밀번호는 숫자를 하나 이상 포함해야 합니다.")
+        if not re.search(r'[@$!%*?&]', password):
+            raise ValidationError("비밀번호는 특수 문자를 하나 이상 포함해야 합니다.")
 
     def get_help_text(self):
         return "비밀번호는 대문자, 소문자, 숫자 및 특수 문자를 포함해야 합니다."
