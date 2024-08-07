@@ -5,6 +5,7 @@ from rest_framework import status
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from users.models import CustomUser
+from users.serializers import UserScoreSerializer
 from .models import Game
 from .serializers import GameSerializer
 from game.serializers import GameScoreHistorySerializer
@@ -28,10 +29,37 @@ class SaveGameView(APIView):
             'user1_score': data['user1_score'],
             'user2_score': data['user2_score']
         }
-
         serializer = GameScoreHistorySerializer(data=game_data)
         if serializer.is_valid():
             serializer.save()
+            if data['user1_score'] > data['user2_score']:
+                user1_data = {
+                    "match_cnt": user1.match_cnt + 1,
+                    "win_cnt": user1.win_cnt + 1,
+                    "score": user1.score + 20
+                }
+                user2_data = {
+                    "match_cnt": user2.match_cnt + 1,
+                    "win_cnt": user2.win_cnt,
+                    "score": user1.score - 20
+                }
+            else:
+                user1_data = {
+                    "match_cnt": user1.match_cnt + 1,
+                    "win_cnt": user1.win_cnt,
+                    "score": user1.score - 20
+                }
+                user2_data = {
+                    "match_cnt": user2.match_cnt + 1,
+                    "win_cnt": user2.win_cnt + 1,
+                    "score": user1.score + 20
+                }
+
+            user1_serializer = UserScoreSerializer(user1, data=user1_data)
+            user2_serializer = UserScoreSerializer(user2, data=user2_data)
+            if user1_serializer.is_valid() and user2_serializer.is_valid():
+                user1_serializer.save()
+                user2_serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
