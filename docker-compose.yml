@@ -15,6 +15,13 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7
+    restart: always
+    container_name: redis
+    ports: 
+      - "6379:6379"
+
   web:
     build: .
     restart: always

@@ -10,6 +10,7 @@ from rest_framework_simplejwt.views import (
 
 urlpatterns = [
     path('api/admin/', admin.site.urls),
+    path("chat/", include("chat.urls")),
 
 
     path('api/otp/', include("otp.urls")),

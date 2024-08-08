@@ -5,3 +5,6 @@ Pillow~=10.4.0
 psycopg2-binary
 djangorestframework-simplejwt
 requests
+daphne
+channels
+channels_redis
