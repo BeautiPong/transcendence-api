@@ -181,6 +181,20 @@ def login (request) :
             )
         return response
 
+# 로그아웃
+class LogoutView(APIView) :
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    
+    def post(self, request) :
+        data = json.loads(request.body)
+        refresh_token = data.get('refresh_token')
+        token = RefreshToken(token=refresh_token)
+        token.blacklist()
+
+        return JsonResponse({"message": "로그아웃 성공!"},
+            status = status.HTTP_200_OK)
+
 
 # 사용자 정보 반환
 class UserProfileView(APIView):
