@@ -27,6 +27,12 @@ class LoginConsumer(AsyncWebsocketConsumer):
 #             종민그룹, {"type": "chat.message", "message": message}
        )
 
+    # 클라이언트에게 message 보내주기
+    async def send_alarm(self, event):
+        message = event["message"]
+
+        await self.send(text_data=json.dumps({"message": message}))
+
 
 
 #     # Receive message from WebSocket
@@ -78,7 +84,3 @@ class LoginConsumer(AsyncWebsocketConsumer):
 #     async def disconnect(self, close_code):
 #         await self.channel_layer.group_discard(self.group_name, self.channel_name)
 #
-#     async def send_alarm(self, event):
-#         message = event["message"]
-#
-#         await self.send(text_data=json.dumps({"message": message}))

@@ -1,4 +1,4 @@
-from .views import get_code, get_token, UserInfoView, UserRankingView, index, room
+from .views import get_code, get_token, UserInfoView, UserRankingView
 from django.urls import path
 from .views import join, login, LogoutView, UserProfileView, UserProfileUpdateView, WebSocketLoginView
 from rest_framework_simplejwt.views import TokenRefreshView
