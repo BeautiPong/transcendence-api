@@ -31,3 +31,10 @@ services:
         condition: service_healthy
     env_file: .env
 
+  redis:
+    image: redis:7
+    restart: always
+    container_name: redis
+    env_file: .env
+    ports:
+      - "6379:6379"

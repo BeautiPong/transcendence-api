@@ -30,6 +30,9 @@ INSTALLED_APPS = [
     'message',
     'scoreHistory',
     'otp',
+    'daphne',
+    'channels',
+    'channels_redis',
 ]
 
 MIDDLEWARE = [
@@ -137,3 +140,13 @@ EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
+
+ASGI_APPLICATION = "app.asgi.application"
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("redis", 6379)],
+        },
+    },
+}
