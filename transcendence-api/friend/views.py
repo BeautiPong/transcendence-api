@@ -67,10 +67,10 @@ class AddFriend(APIView) :
             channel_layer = get_channel_layer()
 
             async_to_sync(channel_layer.group_send)(
-                f'friend_request_{friend_nickname}',
+                f'group_{friend_nickname}',
                 {
-                    'type': 'friend_request_message',
-                    'message': f'Friend request from {user.nickname}'
+                    'type': 'friend_request',
+                    'message': f'{user.nickname}님이 친구 요청을 보냈습니다!'
                 }
             )
 
@@ -94,6 +94,17 @@ class AddFriend(APIView) :
 
         friend1.save()
         friend2.save()
+
+        if user2.is_active :
+            channel_layer = get_channel_layer()
+
+            async_to_sync(channel_layer.group_send)(
+                f'group_{friend_nickname}',
+                {
+                    'type': 'friend_request',   # 함수명
+                    'message': f'{user.nickname}님이 요청을 수락했습니다!'
+                }
+            )
     
         return Response({"message": "친구관계 성립~"}, status=status.HTTP_200_OK)
     

@@ -34,6 +34,12 @@ class LoginConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({"message": message}))
 
 
+    # 친구 요청 보냄
+    async def friend_request(self, event):
+        message = event["message"]
+
+        await self.send(text_data=json.dumps({"message": message}))
+
 
 #     # Receive message from WebSocket
 #     async def receive(self, text_data):
