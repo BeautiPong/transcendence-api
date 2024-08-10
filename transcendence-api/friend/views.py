@@ -1,3 +1,5 @@
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.shortcuts import render
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -7,6 +9,7 @@ from friend.models import Friend
 from rest_framework.response import Response
 from users.utils import *
 
+
 # 내 친구 리스트 반환
 class FriendList(APIView) :
     permission_classes = [IsAuthenticated]
@@ -14,6 +17,7 @@ class FriendList(APIView) :
 
     def get(self, request):
         user = request.user
+        print("user = ", user)
 
         friend_with_user1 = Friend.objects.filter(user1 = user, status=Friend.Status.ACCEPT)
         friend_list = [friend.user2 for friend in friend_with_user1]
@@ -57,5 +61,28 @@ class AddFriend(APIView) :
             status=Friend.Status.ACCEPT
         )
         friend.save()
+
+        return Response({"message": "Friend request sent."}, status=status.HTTP_201_CREATED)
+
+class AddFriendsV2(APIView) :
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def post(self, request) :
+        user = request.user
+
+        friend_nickname = request.data.get('nickname')
+        user2 = CustomUser.objects.filter(nickname=friend_nickname).first()
+
+        #DB생성
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"user_{user2.nickname}",
+            {
+                'type': 'request_friend',
+                'sender': user.nickname,
+                'message': f"{user.nickname} has sent you a friend request."
+            }
+        )
 
         return Response({"message": "Friend request sent."}, status=status.HTTP_201_CREATED)

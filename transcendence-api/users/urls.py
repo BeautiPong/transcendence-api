@@ -1,6 +1,6 @@
-from .views import get_code, get_token, UserInfoView, UserRankingView, index, room
+from .views import get_code, get_token, UserInfoView, UserRankingView
 from django.urls import path
-from .views import join, login, LogoutView, UserProfileView, UserProfileUpdateView, WebSocketLoginView
+from .views import join, login, LogoutView, UserProfileView, UserProfileUpdateView
 from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
@@ -16,8 +16,4 @@ urlpatterns = [
     path('rank/<str:nickname>/', UserRankingView.as_view(), name='get_user_rank'),
     path('token/reissue', TokenRefreshView.as_view()),
 
-
-    #웹소켓
-    # path("", index, name="index"),
-    path("<str:nickname>/", WebSocketLoginView.as_view(), name="login"),
 ]
