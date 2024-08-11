@@ -11,13 +11,13 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             # 로그에 유저 정보 출력
             self.nickname = user.nickname
             self.group_name = f"user_{self.nickname}"
+            await self.channel_layer.group_add(self.group_name, self.channel_name)
             await self.accept()
         else:
             await self.close()
 
 
         # 그룹에 추가
-        # await self.channel_layer.group_add(self.group_name, self.channel_name)
 
     async def disconnect(self, close_code):
         pass

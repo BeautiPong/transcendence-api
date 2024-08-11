@@ -10,10 +10,8 @@
 <input id="chat-message-submit" type="button" value="Send">
 {{ jwt_token|json_script:"jwt_token" }}
 <script>
-    // JWT 토큰을 Django에서 전달받음
     const jwtToken = JSON.parse(document.getElementById('jwt_token').textContent);
 
-    // WebSocket 연결을 위한 URL에 토큰을 쿼리 파라미터로 포함시킴
     const chatSocket = new WebSocket(
         'ws://'
         + window.location.host
@@ -23,7 +21,10 @@
 
     chatSocket.onmessage = function(e) {
         const data = JSON.parse(e.data);
-        document.querySelector('#chat-log').value += (data.message + '\n');
+
+        console.log("Received data:", data);
+
+        document.querySelector('#chat-log').value += (`서버로부터 받은 데이터: ${JSON.stringify(data, null, 2)}\n`);
     };
 
     chatSocket.onclose = function(e) {
