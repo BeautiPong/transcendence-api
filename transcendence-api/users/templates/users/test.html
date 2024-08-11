@@ -1,4 +1,3 @@
-<!-- chat/templates/chat/room.html -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -9,16 +8,17 @@
 <textarea id="chat-log" cols="100" rows="20"></textarea><br>
 <input id="chat-message-input" type="text" size="100"><br>
 <input id="chat-message-submit" type="button" value="Send">
-{{ nickname|json_script:"nickname" }}
+{{ jwt_token|json_script:"jwt_token" }}
 <script>
-    const nickname = JSON.parse(document.getElementById('nickname').textContent);
+    // JWT 토큰을 Django에서 전달받음
+    const jwtToken = JSON.parse(document.getElementById('jwt_token').textContent);
 
+    // WebSocket 연결을 위한 URL에 토큰을 쿼리 파라미터로 포함시킴
     const chatSocket = new WebSocket(
         'ws://'
         + window.location.host
         + '/ws/user/'
-        + nickname
-        + '/'
+        + '?token=' + jwtToken
     );
 
     chatSocket.onmessage = function(e) {

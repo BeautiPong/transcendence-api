@@ -1,4 +1,4 @@
-from .views import get_code, get_token, UserInfoView, UserRankingView
+from .views import get_code, get_token, UserInfoView, UserRankingView, login_and_redirect
 from django.urls import path
 from .views import join, login, LogoutView, UserProfileView, UserProfileUpdateView
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -15,5 +15,5 @@ urlpatterns = [
     path('info/<str:nickname>/', UserInfoView.as_view(), name='get_user_info'),
     path('rank/<str:nickname>/', UserRankingView.as_view(), name='get_user_rank'),
     path('token/reissue', TokenRefreshView.as_view()),
-
+    path('test/', login_and_redirect),
 ]

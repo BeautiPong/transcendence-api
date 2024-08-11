@@ -270,3 +270,21 @@ class UserRankingView(APIView):
         user_rank_serializer = UserRankingSerializer(user_rank)
         return Response(user_rank_serializer.data, status=status.HTTP_200_OK)
 
+
+from django.shortcuts import redirect, render
+from django.views.decorators.csrf import csrf_exempt
+import urllib.parse
+
+@csrf_exempt
+def login_and_redirect(request):
+    if request.method == 'GET':
+        token = request.GET.get('token')
+
+        if token:
+            # `user/test.html`로 토큰 전달
+            return render(request, 'users/test.html', {'jwt_token': token})
+        else:
+            return redirect('/login_page/')  # 토큰이 없을 경우 로그인 페이지로 리다이렉트
+
+    else:
+        return redirect('/login_page/')  # POST 요청이 아닐 경우 로그인 페이지로 리다이렉트
