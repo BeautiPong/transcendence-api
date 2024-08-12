@@ -58,7 +58,7 @@ class AddFriend(APIView) :
             user2=user,
             user1_victory_num=0,
             user2_victory_num=0,
-            status=Friend.Status.NONE
+            status=Friend.Status.PEND
         )
         friend.save()
 

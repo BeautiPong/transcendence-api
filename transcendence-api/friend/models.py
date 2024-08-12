@@ -7,7 +7,7 @@ class Friend(models.Model):
         ACCEPT = 'AC', 'Accept'
         REFUSE = 'RF', 'Refuse'
         BLOCK = 'BL', 'Block'
-        NONE = 'PN', 'Pend'
+        PEND = 'PN', 'Pend'
         SEND = 'SD', 'Send'
     user1 = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='friend_user1')
     user2 = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='friend_user2')
