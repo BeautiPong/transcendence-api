@@ -149,4 +149,4 @@ CHANNEL_LAYERS = {
             "hosts": [("redis", 6379)],
         },
     },
-}
+

@@ -271,6 +271,27 @@ class UserRankingView(APIView):
         return Response(user_rank_serializer.data, status=status.HTTP_200_OK)
 
 
+class WebSocketLoginView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def post(self, request):
+        user = request.user
+
+        if not user:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        nickname = user.nickname
+        return render(request, "users/login.html", {"nickname": nickname})
+
+# 친추뷰():
+# 	닉네임 받아
+# 	친추(닉네임)
+
+from django.shortcuts import redirect, render
+from django.views.decorators.csrf import csrf_exempt
+import urllib.parse
+
 @csrf_exempt
 def login_and_redirect(request):
     if request.method == 'GET':

@@ -17,7 +17,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             await self.close()
 
 
-    # 그룹에 추가
 
     async def disconnect(self, close_code):
         pass
@@ -31,7 +30,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             'sender': sender,
             'type': 'request_fr',
             'message': message
-        }))
+        
 
     async def invite_game(self, event):
         sender = event["sender"]
@@ -52,4 +51,3 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             'type': 'join_game',
             'room_name': room_name,
         }))
-
