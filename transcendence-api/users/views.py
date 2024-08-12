@@ -1,5 +1,5 @@
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 from rest_framework_simplejwt.authentication    import JWTAuthentication
 from rest_framework_simplejwt.serializers       import *
@@ -269,7 +269,6 @@ class UserRankingView(APIView):
 
         user_rank_serializer = UserRankingSerializer(user_rank)
         return Response(user_rank_serializer.data, status=status.HTTP_200_OK)
-
 
 
 class WebSocketLoginView(APIView):
