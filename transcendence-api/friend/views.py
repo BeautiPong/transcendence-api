@@ -63,16 +63,17 @@ class AddFriend(APIView) :
         friend.save()
 
         # 친구가 온라인에 있으면 소켓으로 보내기
-        if user2.is_active :
-            channel_layer = get_channel_layer()
+        # if user2.is_active :
+        channel_layer = get_channel_layer()
 
-            async_to_sync(channel_layer.group_send)(
-                f'group_{friend_nickname}',
-                {
-                    'type': 'friend_request',
-                    'message': f'{user.nickname}님이 친구 요청을 보냈습니다!'
-                }
-            )
+        async_to_sync(channel_layer.group_send)(
+            f"user_{user2.nickname}",
+        {
+            'type': 'request_friend',
+            'sender': user.nickname,
+            'message': f"{user.nickname} 님이 친구 요청을 보냈습니다!!"
+        }
+        )
 
         return Response({"message": "Friend request sent."}, status=status.HTTP_201_CREATED)
     
@@ -95,38 +96,39 @@ class AcceptFriend(APIView) :
         friend1.save()
         friend2.save()
 
-        if user2.is_active :
-            channel_layer = get_channel_layer()
-
-            async_to_sync(channel_layer.group_send)(
-                f'group_{friend_nickname}',
-                {
-                    'type': 'friend_request',   # 함수명
-                    'message': f'{user.nickname}님이 요청을 수락했습니다!'
-                }
-            )
-
-        return Response({"message": "친구관계 성립~"}, status=status.HTTP_200_OK)
-
-class AddFriendsV2(APIView) :
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
-
-    def post(self, request) :
-        user = request.user
-
-        friend_nickname = request.data.get('nickname')
-        user2 = CustomUser.objects.filter(nickname=friend_nickname).first()
-
-        #DB생성
+        # if user2.is_active :
         channel_layer = get_channel_layer()
+
         async_to_sync(channel_layer.group_send)(
             f"user_{user2.nickname}",
             {
                 'type': 'request_friend',
                 'sender': user.nickname,
-                'message': f"{user.nickname} has sent you a friend request."
+                'message': f"{user.nickname} 님이 친구 요청을 수락했습니다!!"
             }
         )
 
-        return Response({"message": "Friend request sent."}, status=status.HTTP_201_CREATED)
+        return Response({"message": "친구관계 성립~"}, status=status.HTTP_200_OK)
+
+# class AddFriendsV2(APIView) :
+#     permission_classes = [IsAuthenticated]
+#     authentication_classes = [JWTAuthentication]
+
+#     def post(self, request) :
+#         user = request.user
+
+#         friend_nickname = request.data.get('nickname')
+#         user2 = CustomUser.objects.filter(nickname=friend_nickname).first()
+
+#         #DB생성
+#         channel_layer = get_channel_layer()
+#         async_to_sync(channel_layer.group_send)(
+#             f"user_{user2.nickname}",
+#             {
+#                 'type': 'request_friend',
+#                 'sender': user.nickname,
+#                 'message': f"{user.nickname} has sent you a friend request."
+#             }
+#         )
+
+#         return Response({"message": "Friend request sent."}, status=status.HTTP_201_CREATED)
