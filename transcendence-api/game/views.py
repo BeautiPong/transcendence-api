@@ -1,3 +1,5 @@
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -81,3 +83,53 @@ class RecentGamesView(APIView):
         recent_games = Game.objects.filter(user1=user).order_by('-create_time')[:5]
         serializer = GameSerializer(recent_games, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class InviteGameView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def post(self, request, nickname):
+        user = request.user
+        friend = CustomUser.objects.get(nickname=nickname)
+
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"user_{friend.nickname}",
+            {
+                'type': 'invite_game',
+                'sender': user.nickname,
+                'message': f"{user.nickname} invite you."
+            }
+        )
+
+        return Response({"message": "Friend invite sent."}, status=status.HTTP_201_CREATED)
+
+class AcceptGameView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def post(self, request, friend_nickname):
+        user = request.user
+
+        room_name = f'game_{friend_nickname}'
+        channel_layer = get_channel_layer()
+
+        async_to_sync(channel_layer.group_send)(
+            f"user_{friend_nickname}",
+            {
+                'type': 'join_game',
+                'room_name': room_name,
+            }
+        )
+
+        async_to_sync(channel_layer.group_send)(
+            f"user_{user.nickname}",
+            {
+                'type': 'join_game',
+                'room_name': room_name,
+            }
+        )
+
+        return Response({"message": "Join Game"}, status=status.HTTP_201_CREATED)
+
+
