@@ -30,7 +30,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             'sender': sender,
             'type': 'request_fr',
             'message': message
-        
+        }))
 
     async def invite_game(self, event):
         sender = event["sender"]
