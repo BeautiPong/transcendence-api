@@ -1,0 +1,79 @@
+/* 전체 채팅 컨테이너 스타일 */
+#chat-container {
+    margin: 0 auto;
+    width: 80%;
+    max-width: 600px; /* 채팅방의 최대 너비 */
+    border: 1px solid #ddd;
+    padding: 20px;
+    background: #f9f9f9;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* 채팅 메시지 리스트 스타일 */
+#chat-messages {
+    height: 500px; /* 채팅 메시지 영역의 높이 */
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: #fff;
+}
+
+/* 메시지 입력 영역 스타일 */
+#message-input {
+    width: calc(100% - 90px); /* 전송 버튼 너비를 고려하여 조정 */
+    padding: 10px;
+    border: 1px solid #ccc;
+    margin-right: 10px; /* 버튼과의 간격 */
+}
+
+/* 전송 버튼 스타일 */
+#send-btn {
+    width: 80px;
+    padding: 10px;
+    background: #5cb85c;
+    color: white;
+    border: none;
+}
+
+/* 버튼 스타일 */
+button {
+    cursor: pointer;
+    padding: 10px;
+    border: none;
+    background: #337ab7;
+    color: white;
+}
+
+/* 메시지 말풍선 스타일 */
+.message-bubble {
+    padding: 10px 15px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    display: inline-block;
+    max-width: 70%;
+}
+
+/* 발신자 메시지 스타일 */
+.message-bubble.sent {
+    background: #e7f3ff;
+    align-self: flex-end;
+}
+
+/* 수신자 메시지 스타일 */
+.message-bubble.received {
+    background: #f0f0f0;
+    align-self: flex-start;
+}
+
+/* 메시지가 추가될 때의 정렬 */
+#chat-messages {
+    display: flex;
+    flex-direction: column;
+}
+
+/* 로그인 버튼 스타일 */
+.login-btn {
+    padding: 10px 15px;
+    margin-bottom: 20px;
+}

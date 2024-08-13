@@ -11,7 +11,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'daphne',
@@ -33,7 +33,10 @@ INSTALLED_APPS = [
     'otp',
     'channels',
     'channels_redis',
+    'chat',
 ]
+
+STATIC_URL = '/static/'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

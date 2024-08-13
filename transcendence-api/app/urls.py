@@ -18,4 +18,6 @@ urlpatterns = [
 
     path('api/friend/', include("friend.urls")),
     path('api/game/', include('game.urls')),
+
+    path('api/chat/', include("chat.urls")),
 ]

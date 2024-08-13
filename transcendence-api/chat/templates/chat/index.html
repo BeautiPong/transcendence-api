@@ -1,0 +1,25 @@
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat Application</title>
+{% load static %}
+<link rel="stylesheet" href="{% static 'chat/styles.css' %}">
+</head>
+<body>
+<div id="chat-container">
+    <!-- 로그인 버튼 -->
+    <button onclick="loginAsUser('qw@naver.com')">User 1 (qw@naver.com)</button>
+    <button onclick="loginAsUser('er@naver.com')">User 2 (er@naver.com)</button>
+    
+    <!-- 채팅방 메시지 -->
+    <div id="chat-messages"></div>
+    
+    <!-- 메시지 입력 및 전송 -->
+    <input type="text" id="message-input" placeholder="메시지를 입력하세요">
+    <button id="send-btn">보내기</button>
+</div>
+<script src="{% static 'chat/scripts.js' %}"></script>
+</body>
+</html>
