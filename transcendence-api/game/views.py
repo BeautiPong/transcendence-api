@@ -1,5 +1,6 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.shortcuts import render, redirect
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -111,7 +112,7 @@ class AcceptGameView(APIView):
     def post(self, request, friend_nickname):
         user = request.user
 
-        room_name = f'game_{friend_nickname}'
+        room_name = f'game_{user.nickname}_{friend_nickname}'
         channel_layer = get_channel_layer()
 
         async_to_sync(channel_layer.group_send)(
@@ -133,3 +134,28 @@ class AcceptGameView(APIView):
         return Response({"message": "Join Game"}, status=status.HTTP_201_CREATED)
 
 
+def match(request):
+    if request.method == 'GET':
+        token = request.GET.get('token')
+        room_name = request.GET.get('room_name')
+        user = request.user
+
+        if room_name:
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                room_name,
+                {
+                    'type': 'start_game',
+                    'room_name': room_name,
+                    'message': 'start game'
+                }
+            )
+            return Response({"message": "Start Game"}, status=status.HTTP_200_OK)
+
+        if token:
+            return render(request, 'game/match.html', {'jwt_token': token, 'room_name': room_name})
+        else:
+            return redirect('/login_page/')  # 토큰이 없을 경우 로그인 페이지로 리다이렉트
+
+    else:
+        return redirect('/login_page/')  # POST 요청이 아닐 경우 로그인 페이지로 리다이렉트
