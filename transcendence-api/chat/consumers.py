@@ -40,7 +40,5 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         # 웹소켓으로 보내기
         await self.send(text_data=json.dumps({
-            # "message": message,
-            # "sender" : sender,
             "message" : f'{sender} : {message}'
         }))
