@@ -15,3 +15,4 @@ class Friend(models.Model):
     user2_victory_num = models.IntegerField()
     status = models.CharField(max_length=2,
                               choices=Status.choices)
+    create_time = models.DateTimeField(auto_now_add=True)

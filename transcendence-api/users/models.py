@@ -42,6 +42,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     match_cnt = models.IntegerField(default=0)
     win_cnt = models.IntegerField(default=0)
+    last_login = models.DateTimeField(null=True, blank=True)
+    last_logout = models.DateTimeField(null=True, blank=True)
 
     objects = CustomUserManager()
 
