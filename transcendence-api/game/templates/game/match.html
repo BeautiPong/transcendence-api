@@ -20,7 +20,7 @@
         + window.location.host
         + '/ws/match/'
         + '?token=' + jwtToken
-        + '&roomName=' + roomName  // 여기서 `&`를 사용해야 합니다
+        + '&room_name=' + roomName  // 여기서 `&`를 사용해야 합니다
     );
 
     chatSocket.onmessage = function(e) {

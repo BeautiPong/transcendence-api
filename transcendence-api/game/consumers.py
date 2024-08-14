@@ -7,8 +7,6 @@ class MatchingConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         user = self.scope['user']
         self.room_name = self.scope['url_route']['kwargs'].get('room_name', None)
-        await self.channel_layer.group_add(f'user_{user.nickname}', self.channel_name)
-
 
         if user.is_authenticated:
 
@@ -16,17 +14,19 @@ class MatchingConsumer(AsyncWebsocketConsumer):
 
             await self.accept()
             if not self.room_name:
+                await self.channel_layer.group_add(f'user_{user.nickname}', self.channel_name)
                 self.matchmaking_queue_key = 'matchmaking_queue'
 
                 await self.redis_client.lpush(self.matchmaking_queue_key, user.nickname)
                 await self.match_users()
 
             else:
+                await self.channel_layer.group_add(self.room_name, self.channel_name)
                 await self.channel_layer.group_send(
-                    f'game_{self.room_name}',
+                    self.room_name,
                     {
                         'type': 'game_start',
-                        'message': 'Game started'
+                        'message': 'Game started with friends'
                     }
                 )
         else:
