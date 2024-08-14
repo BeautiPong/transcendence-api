@@ -1,6 +1,11 @@
 import json
 
 from channels.generic.websocket import AsyncWebsocketConsumer
+from message.models import Message
+from chattingRoom.models import ChattingRoom
+from users.models import CustomUser
+from datetime import datetime
+from channels.db import database_sync_to_async
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -31,6 +36,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         text_data_json = json.loads(text_data)
         message = text_data_json["message"]
         sender = text_data_json["sender"]
+        roomName = text_data_json["roomName"]
+
+        # message 저장
+        await self.save_message(roomName, sender, message)
 
         # 그룹한테 메시지 보내기
         await self.channel_layer.group_send(
@@ -39,6 +48,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "message": message,
                 "sender" : sender,
             }
+        )
+    
+    @database_sync_to_async
+    def save_message(self, room_name, sender, message):
+        
+        room = ChattingRoom.objects.filter(name=room_name).first()
+        user = CustomUser.objects.filter(nickname=sender).first()
+
+        # Save message with current time
+        Message.objects.create(
+            room=room,
+            sender=user,
+            content=message,
+            created_at=datetime.now()
         )
 
     # 그룹으로부터 메시지 받기

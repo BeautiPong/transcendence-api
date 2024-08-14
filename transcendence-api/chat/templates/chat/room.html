@@ -51,6 +51,7 @@
             chatSocket.send(JSON.stringify({
                 'message': message,
                 'sender' : sender,
+                'roomName' : roomName
             }));
             messageInputDom.value = '';
         };
