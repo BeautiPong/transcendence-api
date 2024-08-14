@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from chattingRoom.models import ChattingRoom
 from users.models import CustomUser
 from rest_framework_simplejwt.tokens import AccessToken
+from message.models import Message
 
 # 친구 목록이 있는 화면으로 가기 위한 렌더링
 def index(request):
@@ -17,7 +18,7 @@ def index(request):
         return render(request, "chat/index.html", {'jwt_token': token})
 
 
-# 채팅방 들어가기
+# 채팅방 들어가기 위한 렌더링
 def room(request, room_name):
 
     if request.method == 'GET' :
@@ -27,9 +28,29 @@ def room(request, room_name):
     user_id = access_token['user_id']
     user = CustomUser.objects.get(id=user_id)
 
+    # 기존의 대화 내용 찾아오기
+    chatting_room = ChattingRoom.objects.filter(name=room_name).first()
+
+    # 채팅방의 메시지 가져오기
+    if chatting_room:
+        messages = Message.objects.filter(room=chatting_room).order_by('created_at')
+        # 메시지를 JSON 형식으로 변환
+        message_list = [
+            {
+                "sender": message.sender.nickname,
+                "content": message.content,
+                "created_at": message.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            }
+            for message in messages
+        ]
+    else:
+        message_list = []
+    
+
     return render(request, "chat/room.html", {"room_name": room_name,
                                                   "sender": user.nickname,
-                                                  "jwt_token": token})
+                                                  "jwt_token": token,
+                                                  "messages": message_list})
 
 
 # 친구 목록 보여주기

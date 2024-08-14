@@ -12,7 +12,36 @@
     {{ room_name|json_script:"room-name" }}
     {{ sender|json_script:"sender" }}
     {{ jwt_token|json_script:"jwt_token" }}
+    {{ messages|json_script:"messages" }}
     <script>
+        const messagesElement = document.getElementById('messages');
+        // const messagesJSON = messagesElement.textContent;
+        const messagesJSON = messagesElement.innerHTML;
+
+        let previousMessages = [];
+
+        try {
+            previousMessages = JSON.parse(messagesJSON);
+        } catch (e) {
+            console.error('Failed to parse JSON:', e);
+        }
+
+        // 페이지 로드 시 기존 메시지를 표시합니다.
+        function displayPreviousMessages() {
+            const chatLog = document.querySelector('#chat-log');
+            if (!chatLog) {
+                console.error('Chat log element not found');
+                return;
+            }
+
+            previousMessages.forEach(message => {
+                chatLog.value += `${message.sender} [${message.created_at}]: ${message.content}\n`;
+            });
+        }
+
+        // 기존 메시지를 표시합니다.
+        displayPreviousMessages();
+
         const roomName = JSON.parse(document.getElementById('room-name').textContent);
         const sender = JSON.parse(document.getElementById('sender').textContent);
         const jwtToken = JSON.parse(document.getElementById('jwt_token').textContent);
@@ -37,13 +66,19 @@
         };
 
         document.querySelector('#chat-message-input').focus();
+
+
         document.querySelector('#chat-message-input').onkeyup = function(e) {
             if (e.key === 'Enter') {  // enter, return
-                document.querySelector('#chat-message-submit').click();
+                sendMessage();
             }
         };
 
         document.querySelector('#chat-message-submit').onclick = function(e) {
+            sendMessage();
+        };
+
+        function sendMessage() {
             const messageInputDom = document.querySelector('#chat-message-input');
             const message = messageInputDom.value;
 
@@ -54,7 +89,7 @@
                 'roomName' : roomName
             }));
             messageInputDom.value = '';
-        };
+        }
     </script>
 </body>
 </html>
