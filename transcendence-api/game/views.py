@@ -154,7 +154,7 @@ class MatchingView(APIView):
                     'message': 'start game with friend'
                 }
             )
-            return Response({"message": "Start Game with friend"}, status=status.HTTP_200_OK)
+            # return Response({"message": "Start Game with friend"}, status=status.HTTP_200_OK)
 
         if token:
             return render(request, 'game/match.html', {'jwt_token': token, 'room_name': room_name})
