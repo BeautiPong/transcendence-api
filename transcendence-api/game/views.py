@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.exceptions import NotFound, ValidationError
 
 from scoreHistory.models import ScoreHistory
 from users.models import CustomUser
@@ -14,6 +15,7 @@ from users.serializers import UserScoreSerializer
 from .models import Game
 from .serializers import GameSerializer
 from game.serializers import GameScoreHistorySerializer
+from friend.views import check_myfriend
 
 
 class SaveGameView(APIView):
@@ -92,7 +94,22 @@ class InviteGameView(APIView):
 
     def post(self, request, nickname):
         user = request.user
-        friend = CustomUser.objects.get(nickname=nickname)
+        try:
+            friend = CustomUser.objects.get(nickname=nickname)
+        except CustomUser.DoesNotExist:
+            raise NotFound(detail="Friend does not exist.", code=status.HTTP_404_NOT_FOUND)
+
+        # 나 자신에게 게임 초대를 시도할 경우 예외 처리
+        if user == friend:
+            raise ValidationError(detail="You cannot invite yourself.", code=status.HTTP_400_BAD_REQUEST)
+
+        # 친구가 아닌 사람에게 게임 초대를 시도할 경우 예외 처리
+        if not check_myfriend(user, friend):
+            raise ValidationError(detail="You can invite only friend.", code=status.HTTP_400_BAD_REQUEST)
+
+        # 오프라인 상태인 친구에게 게임 초대를 시도할 경우 예외 처리
+        if not friend.is_online:
+            raise ValidationError(detail="You can invite only online friend.", code=status.HTTP_400_BAD_REQUEST)
 
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
