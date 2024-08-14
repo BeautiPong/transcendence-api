@@ -1,11 +1,13 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.shortcuts import render, redirect
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.exceptions import NotFound, ValidationError
 
 from scoreHistory.models import ScoreHistory
 from users.models import CustomUser
@@ -13,6 +15,7 @@ from users.serializers import UserScoreSerializer
 from .models import Game
 from .serializers import GameSerializer
 from game.serializers import GameScoreHistorySerializer
+from friend.views import check_myfriend
 
 
 class SaveGameView(APIView):
@@ -91,7 +94,22 @@ class InviteGameView(APIView):
 
     def post(self, request, nickname):
         user = request.user
-        friend = CustomUser.objects.get(nickname=nickname)
+        try:
+            friend = CustomUser.objects.get(nickname=nickname)
+        except CustomUser.DoesNotExist:
+            raise NotFound(detail="Friend does not exist.", code=status.HTTP_404_NOT_FOUND)
+
+        # 나 자신에게 게임 초대를 시도할 경우 예외 처리
+        if user == friend:
+            raise ValidationError(detail="You cannot invite yourself.", code=status.HTTP_400_BAD_REQUEST)
+
+        # 친구가 아닌 사람에게 게임 초대를 시도할 경우 예외 처리
+        if not check_myfriend(user, friend):
+            raise ValidationError(detail="You can invite only friend.", code=status.HTTP_400_BAD_REQUEST)
+
+        # 오프라인 상태인 친구에게 게임 초대를 시도할 경우 예외 처리
+        if not friend.is_online:
+            raise ValidationError(detail="You can invite only online friend.", code=status.HTTP_400_BAD_REQUEST)
 
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
@@ -118,7 +136,7 @@ class AcceptGameView(APIView):
         async_to_sync(channel_layer.group_send)(
             f"user_{friend_nickname}",
             {
-                'type': 'join_game',
+                'type': 'join_room',
                 'room_name': room_name,
             }
         )
@@ -126,16 +144,18 @@ class AcceptGameView(APIView):
         async_to_sync(channel_layer.group_send)(
             f"user_{user.nickname}",
             {
-                'type': 'join_game',
+                'type': 'join_room',
                 'room_name': room_name,
             }
         )
 
         return Response({"message": "Join Game"}, status=status.HTTP_201_CREATED)
 
+class MatchingView(APIView):
+    # permission_classes = [IsAuthenticated]
+    # authentication_classes = [JWTAuthentication]
 
-def match(request):
-    if request.method == 'GET':
+    def get(self, request):
         token = request.GET.get('token')
         room_name = request.GET.get('room_name')
         user = request.user
@@ -145,17 +165,15 @@ def match(request):
             async_to_sync(channel_layer.group_send)(
                 room_name,
                 {
-                    'type': 'start_game',
+                    # 프론트에서 이거 보고 매칭 웹소켓 연결 시작해야 됨(룸 네임 주면서,,)
+                    'type': 'start_game_with_friend',
                     'room_name': room_name,
-                    'message': 'start game'
+                    'message': 'start game with friend'
                 }
             )
-            return Response({"message": "Start Game"}, status=status.HTTP_200_OK)
+            # return Response({"message": "Start Game with friend"}, status=status.HTTP_200_OK)
 
         if token:
             return render(request, 'game/match.html', {'jwt_token': token, 'room_name': room_name})
         else:
-            return redirect('/login_page/')  # 토큰이 없을 경우 로그인 페이지로 리다이렉트
-
-    else:
-        return redirect('/login_page/')  # POST 요청이 아닐 경우 로그인 페이지로 리다이렉트
+            return redirect('/login_page/')
