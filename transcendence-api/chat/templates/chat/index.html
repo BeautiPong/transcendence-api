@@ -53,7 +53,7 @@
                     })
                     .then(response => response.json())
                     .then(data => {
-                        window.location.href = `/api/chat/room/${data.room_name}/`;
+                        window.location.href = `/api/chat/room/${data.room_name}/?token=${getJwtToken()}`;
                     });
                 }
             };

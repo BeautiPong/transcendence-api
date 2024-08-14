@@ -10,6 +10,7 @@ urlpatterns = [
     path('create/', CreateChatRoom.as_view(), name='create_chat_room'),
     path("", views.index, name="index"),
     path("room/<str:room_name>/", views.room, name="room"),
+    # path("room/<str:room_name>/", Room.as_view(), name="room"),
 
     # path("<str:friend_nickname>/", ChatFriend.as_view(), name="chat_friend"),
 ]
