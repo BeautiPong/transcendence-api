@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from users.utils import *
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from rest_framework.exceptions import NotFound, ValidationError
 
 # 내 친구 리스트 반환
 class FriendList(APIView) :
@@ -39,8 +40,14 @@ class AddFriend(APIView) :
 
     def post(self, request, friend_nickname) :
         user = request.user
+        try:
+            user2 = CustomUser.objects.get(nickname=friend_nickname)
+        except CustomUser.DoesNotExist:
+            raise NotFound(detail="Friend does not exist.", code=status.HTTP_404_NOT_FOUND)
 
-        user2 = CustomUser.objects.filter(nickname=friend_nickname).first()
+        # 나 자신에게 친구 추가를 시도할 경우 예외 처리
+        if user == user2:
+            raise ValidationError(detail="You cannot add yourself as a friend.", code=status.HTTP_400_BAD_REQUEST)
 
         # 친구 요청 보낸 사람 = user1
         friend = Friend(
