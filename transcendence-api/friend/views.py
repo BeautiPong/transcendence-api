@@ -117,25 +117,10 @@ class AcceptFriend(APIView) :
 
         return Response({"message": "친구관계 성립~"}, status=status.HTTP_200_OK)
 
-# class AddFriendsV2(APIView) :
-#     permission_classes = [IsAuthenticated]
-#     authentication_classes = [JWTAuthentication]
+def check_myfriend(user, friend_nickname) :
+    friends = Friend.objects.filter(
+        user1=user,
+        status=Friend.Status.ACCEPT
+    ).select_related('user2')
 
-#     def post(self, request) :
-#         user = request.user
-
-#         friend_nickname = request.data.get('nickname')
-#         user2 = CustomUser.objects.filter(nickname=friend_nickname).first()
-
-#         #DB생성
-#         channel_layer = get_channel_layer()
-#         async_to_sync(channel_layer.group_send)(
-#             f"user_{user2.nickname}",
-#             {
-#                 'type': 'request_friend',
-#                 'sender': user.nickname,
-#                 'message': f"{user.nickname} has sent you a friend request."
-#             }
-#         )
-
-#         return Response({"message": "Friend request sent."}, status=status.HTTP_201_CREATED)
+    return friends.filter(user2__nickname=friend_nickname).exists()

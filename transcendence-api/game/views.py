@@ -14,6 +14,7 @@ from users.serializers import UserScoreSerializer
 from .models import Game
 from .serializers import GameSerializer
 from game.serializers import GameScoreHistorySerializer
+from friend.views import check_myfriend
 
 
 class SaveGameView(APIView):
@@ -100,6 +101,10 @@ class InviteGameView(APIView):
         # 나 자신에게 게임 초대를 시도할 경우 예외 처리
         if user == friend:
             raise ValidationError(detail="You cannot invite yourself.", code=status.HTTP_400_BAD_REQUEST)
+
+        # 친구가 아닌 사람에게 게임 초대를 시도할 경우 예외 처리
+        if not check_myfriend(user, friend):
+            raise ValidationError(detail="You can invite only friend.", code=status.HTTP_400_BAD_REQUEST)
 
         # 오프라인 상태인 친구에게 게임 초대를 시도할 경우 예외 처리
         if not friend.is_online:
