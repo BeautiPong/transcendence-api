@@ -5,12 +5,20 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
-        self.room_group_name = f"chat_{self.room_name}"
 
-        # group에 내 채널 추가
-        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
-        await self.accept()
+        user = self.scope['user']
+
+        if user.is_authenticated:
+            # await self.set_user_active_status(user, True)
+
+            self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
+            self.room_group_name = f"chat_{self.room_name}"
+
+            # group에 내 채널 추가
+            await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+            await self.accept()
+        else:
+            await self.close()
 
 
     # 연결 끊기
@@ -38,7 +46,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message = event["message"]
         sender = event["sender"]
 
-        # 웹소켓으로 보내기
-        await self.send(text_data=json.dumps({
-            "message" : f'{sender} : {message}'
-        }))
+        user = self.scope['user']
+
+        if user.is_authenticated:
+
+            if (user.nickname == sender) :
+                await self.send(text_data=json.dumps({
+                "message" : f'나 : {message}'
+                }))
+            else :
+                await self.send(text_data=json.dumps({
+                "message" : f'{sender} : {message}'
+                }))
+                

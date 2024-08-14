@@ -11,9 +11,11 @@
     <input id="chat-message-submit" type="button" value="Send">
     {{ room_name|json_script:"room-name" }}
     {{ sender|json_script:"sender" }}
+    {{ jwt_token|json_script:"jwt_token" }}
     <script>
         const roomName = JSON.parse(document.getElementById('room-name').textContent);
         const sender = JSON.parse(document.getElementById('sender').textContent);
+        const jwtToken = JSON.parse(document.getElementById('jwt_token').textContent);
 
         // roomName 으로 소켓 구분하는거구나
         const chatSocket = new WebSocket(
@@ -22,6 +24,7 @@
             + '/ws/chat/'
             + roomName
             + '/'
+            + '?token=' + jwtToken
         );
 
         chatSocket.onmessage = function(e) {

@@ -17,10 +17,7 @@ def index(request):
         return render(request, "chat/index.html", {'jwt_token': token})
 
 
-# 채팅방 안으로 들어가기 위한 렌더링
-# def room(request, room_name):
-#     return render(request, "chat/room.html", {"room_name": room_name})
-
+# 채팅방 들어가기
 def room(request, room_name):
 
     if request.method == 'GET' :
@@ -31,19 +28,8 @@ def room(request, room_name):
     user = CustomUser.objects.get(id=user_id)
 
     return render(request, "chat/room.html", {"room_name": room_name,
-                                                  "sender": user.nickname})
-
-
-# class Room(APIView) :
-#     permission_classes = [IsAuthenticated]
-#     authentication_classes = [JWTAuthentication]
-
-#     def get(self, request, room_name):
-#         user = request.user
-
-#         return render(request, "chat/room.html", {"room_name": room_name,
-#                                                   "sender": user.nickname})
-
+                                                  "sender": user.nickname,
+                                                  "jwt_token": token})
 
 
 # 친구 목록 보여주기
