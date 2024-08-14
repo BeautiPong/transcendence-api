@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'otp',
     'channels',
     'channels_redis',
+    'chat',
 ]
 
 MIDDLEWARE = [
