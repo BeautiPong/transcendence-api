@@ -48,12 +48,23 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             'message': message
         }))
 
-    async def join_game(self, event):
+    async def join_room(self, event):
         room_name = event["room_name"]
 
         await self.channel_layer.group_add(room_name, self.channel_name)
 
         await self.send(text_data=json.dumps({
-            'type': 'join_game',
+            'type': 'join_room',
             'room_name': room_name,
+        }))
+
+    #프론트에서 이거 보고 매칭 웹소켓 연결해야 됨
+    async def start_game_with_friend(self, event):
+        room_name = event["room_name"]
+        message = event["message"]
+
+        await self.send(text_data=json.dumps({
+            'type': 'start_game_with_friend',
+            'room_name': room_name,
+            'message': message
         }))
