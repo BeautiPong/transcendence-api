@@ -25,7 +25,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def set_user_active_status(self, user, status):
-        user.is_active = status
+        user.is_online = status
         user.save()
 
     async def request_friend(self, event):

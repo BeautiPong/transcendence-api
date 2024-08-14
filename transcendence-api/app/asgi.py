@@ -2,8 +2,9 @@
 import os
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
+
+from app import routing
 from app.middleware import JWTAuthMiddleware
-from notification import routing
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'yourproject.settings')
 

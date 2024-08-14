@@ -2,22 +2,25 @@
 <html>
 <head>
     <meta charset="utf-8"/>
-    <title>Login test</title>
+    <title>match test</title>
 </head>
 <body>
-<h1>로그인용 테스트</h1>
+<h1>게임매칭 테스트</h1>
 <textarea id="chat-log" cols="100" rows="20"></textarea><br>
 <input id="chat-message-input" type="text" size="100"><br>
 <input id="chat-message-submit" type="button" value="Send">
 {{ jwt_token|json_script:"jwt_token" }}
+{{ room_name|json_script:"room_name" }}
 <script>
     const jwtToken = JSON.parse(document.getElementById('jwt_token').textContent);
+    const roomName = JSON.parse(document.getElementById('room_name').textContent);
 
     const chatSocket = new WebSocket(
         'ws://'
         + window.location.host
-        + '/ws/user/'
+        + '/ws/match/'
         + '?token=' + jwtToken
+        + '&roomName=' + roomName  // 여기서 `&`를 사용해야 합니다
     );
 
     chatSocket.onmessage = function(e) {
