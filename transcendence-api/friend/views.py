@@ -49,6 +49,10 @@ class AddFriend(APIView) :
         if user == user2:
             raise ValidationError(detail="You cannot add yourself as a friend.", code=status.HTTP_400_BAD_REQUEST)
 
+        # 친구에게 친구 추가를 시도할 경우 예외 처리
+        if check_myfriend(user, user2):
+            raise ValidationError(detail="You cannot add already friend as a friend.", code=status.HTTP_400_BAD_REQUEST)
+
         # 친구 요청 보낸 사람 = user1
         friend = Friend(
             user1=user,
