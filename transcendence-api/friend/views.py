@@ -140,6 +140,4 @@ def get_my_friends_request(user) :
         status=Friend.Status.SEND,
         create_time__gte=user.last_logout  # last_activity_time 이후의 요청만 가져오기
     ).all()
-    print(test)
-    print("qqqqqqqq")
     return test
