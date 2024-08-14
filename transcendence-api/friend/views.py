@@ -49,6 +49,10 @@ class AddFriend(APIView) :
         if user == user2:
             raise ValidationError(detail="You cannot add yourself as a friend.", code=status.HTTP_400_BAD_REQUEST)
 
+        # 이미 친구 추가를 요청한 경우 예외 처리
+        if check_friendrequest(user, user2):
+            raise ValidationError(detail="You already request friend.", code=status.HTTP_400_BAD_REQUEST)
+
         # 친구에게 친구 추가를 시도할 경우 예외 처리
         if check_myfriend(user, user2):
             raise ValidationError(detail="You cannot add already friend as a friend.", code=status.HTTP_400_BAD_REQUEST)
@@ -74,17 +78,17 @@ class AddFriend(APIView) :
         friend.save()
 
         # 친구가 온라인에 있으면 소켓으로 보내기
-        # if user2.is_active :
-        channel_layer = get_channel_layer()
+        if user2.is_online:
+            channel_layer = get_channel_layer()
 
-        async_to_sync(channel_layer.group_send)(
-            f"user_{user2.nickname}",
-        {
-            'type': 'request_friend',
-            'sender': user.nickname,
-            'message': f"{user.nickname} 님이 친구 요청을 보냈습니다!!"
-        }
-        )
+            async_to_sync(channel_layer.group_send)(
+                f"user_{user2.nickname}",
+            {
+                'type': 'request_friend',
+                'sender': user.nickname,
+                'message': f"{user.nickname} 님이 친구 요청을 보냈습니다!!"
+            }
+            )
 
         return Response({"message": "Friend request sent."}, status=status.HTTP_201_CREATED)
     
@@ -125,6 +129,14 @@ def check_myfriend(user, friend_nickname) :
     friends = Friend.objects.filter(
         user1=user,
         status=Friend.Status.ACCEPT
+    ).select_related('user2')
+
+    return friends.filter(user2__nickname=friend_nickname).exists()
+
+def check_friendrequest(user, friend_nickname) :
+    friends = Friend.objects.filter(
+        user1=user,
+        status=Friend.Status.SEND
     ).select_related('user2')
 
     return friends.filter(user2__nickname=friend_nickname).exists()
