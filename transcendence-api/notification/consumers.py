@@ -21,18 +21,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             await self.accept()
 
             # 비동기 컨텍스트에서 Django ORM 호출
-            notification = await database_sync_to_async(self.get_notifications)(user)
-            if notification:
-                for friend_request in notification:
-                    sender = friend_request.user1.nickname
-                    await self.channel_layer.group_send(
-                        self.group_name,
-                        {
-                            'type': 'request_friend',
-                            'sender': sender,
-                            'message': f"{sender} 님이 친구 요청을 보냈습니다!"
-                        }
-                    )
+            await self.send_notifications(user)
         else:
             await self.close()
 
@@ -43,17 +32,32 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_notifications(self, user):
-        return list(friend.views.get_my_friends_request(user))
+        friend_requests =  friend.views.get_my_friends_request(user)
+        notifications = []
+        for friend_request in friend_requests:
+            sender = friend_request.user1.nickname
+            notifications.append({
+                'type': 'request_friend',
+                'sender': sender,
+                'message': f"{sender} 님이 친구 요청을 보냈습니다!"
+            })
 
+        not_checked_messages = message.views.get_my_not_check_message(user)
+        for not_checked_message in not_checked_messages:
+            sender = not_checked_message.sender
+            notifications.append({
+                'type': 'pend_messages',
+                'sender': sender,
+                'message': f"{not_checked_message.content}"
+            })
 
-        # not_checked_messages = message.views.get_my_not_check_message(user)
-        # for not_checked_message in not_checked_messages:
-        #     sender = not_checked_message.sender
-        #     self.send(text_data=json.dumps({
-        #         'sender': sender,
-        #         'type': 'pend_messages',
-        #         'message': f"{not_checked_message.content}"
-        #     }))
+        return notifications
+
+    async def send_notifications(self, user):
+        notifications = await self.get_notifications(user)
+        for notification in notifications:
+            await self.send(text_data=json.dumps(notification))
+
 
     @database_sync_to_async
     def set_user_active_status(self, user, status):
