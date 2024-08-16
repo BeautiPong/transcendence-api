@@ -50,7 +50,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 'sender': sender.nickname,
                 'message': f"{not_checked_message.content}"
             })
-        print(notifications)
         return notifications
 
     async def send_notifications(self, user):
