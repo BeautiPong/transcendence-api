@@ -108,7 +108,7 @@ class AcceptFriend(APIView) :
         friend1 = Friend.objects.filter(user1=user, user2=user2).first()
         friend2 = Friend.objects.filter(user1=user2, user2=user).first()
 
-        # 요청오지 않은 친구를 수락한 경우
+        # 요청오지 않은 유저를 수락한 경우
         if (friend1 is None or friend2 is None) :
             raise ValidationError(detail="You haven't received a friend request from that friend", code=status.HTTP_400_BAD_REQUEST)
         
