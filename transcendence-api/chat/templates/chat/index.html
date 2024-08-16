@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Chat Rooms</title>
+    <!-- JWT 토큰을 메타 태그에 포함시킵니다 -->
+    <meta name="jwt-token" content="{{ jwt_token }}">
+</head>
+<body>
+    <h1>채팅 💬</h1>
+    <select id="friend-select">
+        <!-- 친구 리스트가 여기에 삽입됩니다 -->
+    </select><br>
+    <input id="DM-보내기" type="button" value="DM 보내기">
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // JWT 토큰을 메타 태그에서 가져오는 함수
+            function getJwtToken() {
+                const metaTag = document.querySelector('meta[name="jwt-token"]');
+                return metaTag ? metaTag.content : '';
+            }
+
+            // 친구 리스트를 가져오기
+            fetch('/api/chat/friend_list/', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${getJwtToken()}`  // JWT 토큰을 Authorization 헤더에 추가
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const friendSelect = document.getElementById('friend-select');
+                data.friends.forEach(friend => {
+                    const option = document.createElement('option');
+                    option.value = friend.nickname;
+                    option.textContent = friend.nickname;
+                    friendSelect.appendChild(option);
+                });
+            });
+
+            // DM 보내기 버튼 클릭 이벤트
+            document.getElementById('DM-보내기').onclick = function() {
+                const selectedFriend = document.getElementById('friend-select').value;
+                if (selectedFriend) {
+                    fetch('/api/chat/create/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${getJwtToken()}`  // JWT 토큰을 Authorization 헤더에 추가
+                        },
+                        body: JSON.stringify({ friend_nickname: selectedFriend })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        window.location.href = `/api/chat/room/${data.room_name}/?token=${getJwtToken()}`;
+                    });
+                }
+            };
+        });
+    </script>
+</body>
+</html>

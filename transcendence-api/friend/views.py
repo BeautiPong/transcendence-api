@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from users.utils import *
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from chattingRoom.models import ChattingRoom
 from rest_framework.exceptions import NotFound, ValidationError
 
 # 내 친구 리스트 반환
@@ -122,6 +123,12 @@ class AcceptFriend(APIView) :
                 'message': f"{user.nickname} 님이 친구 요청을 수락했습니다!!"
             }
         )
+
+        # 수락 했으니까 채팅방 만들기
+        sorted_names = sorted([user.nickname, user2.nickname])
+        room_name = f'chat_{sorted_names[0]}_{sorted_names[1]}'
+        chattingRoom = ChattingRoom(user1=user, user2=user2, name=room_name)
+        chattingRoom.save()
 
         return Response({"message": "친구관계 성립~"}, status=status.HTTP_200_OK)
 
