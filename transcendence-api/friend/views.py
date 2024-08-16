@@ -28,7 +28,7 @@ class FriendList(APIView) :
         friend_info_list_sorted = sorted(friend_info_list, key=lambda user_info: user_info["nickname"])
 
         friend_info_serializer = UserInfoSerializer(friend_info_list_sorted, many=True)
-        return Response(friend_info_serializer.data, status=status.HTTP_200_OK)
+        return Response({'friends':friend_info_serializer.data}, status=status.HTTP_200_OK)
 
 
 # 친구 추가

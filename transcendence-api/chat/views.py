@@ -51,26 +51,6 @@ def room(request, room_name):
                                                   "sender": user.nickname,
                                                   "jwt_token": token,
                                                   "messages": message_list})
-
-
-# 친구 목록 보여주기
-class FriendListInfo(APIView) :
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
-
-    def get(self, request):
-        user = request.user
-
-        friend_list = Friend.objects.filter(user1=user)
-        friend_info_list = [ ]
-        for friend in friend_list :
-             friend_nickname = {
-                 'nickname' : friend.user2.nickname
-             }
-             friend_info_list.append(friend_nickname)
-             
-        serializer = FriendSerializer(friend_info_list, many=True)
-        return Response({'friends': serializer.data})
     
 
 # 채팅방 그룹 이름 설정
