@@ -36,11 +36,14 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     score = models.IntegerField(default=1000)
     image = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
+    is_online = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
     email = models.EmailField(unique=True)
     match_cnt = models.IntegerField(default=0)
     win_cnt = models.IntegerField(default=0)
+    last_login = models.DateTimeField(null=True, blank=True)
+    last_logout = models.DateTimeField(null=True, blank=True)
 
     objects = CustomUserManager()
 

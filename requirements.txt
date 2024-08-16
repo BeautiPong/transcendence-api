@@ -8,3 +8,4 @@ requests
 channels
 daphne
 channels-redis
+aioredis
