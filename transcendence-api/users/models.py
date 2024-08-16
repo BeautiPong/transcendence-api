@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, userID, password=None, **extra_fields):
@@ -43,7 +44,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     match_cnt = models.IntegerField(default=0)
     win_cnt = models.IntegerField(default=0)
     last_login = models.DateTimeField(null=True, blank=True)
-    last_logout = models.DateTimeField(null=True, blank=True)
+    last_logout = models.DateTimeField(default=timezone.now)
 
     objects = CustomUserManager()
 
