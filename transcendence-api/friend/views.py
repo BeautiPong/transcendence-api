@@ -51,45 +51,47 @@ class AddFriend(APIView) :
             raise ValidationError(detail="You cannot add yourself as a friend.", code=status.HTTP_400_BAD_REQUEST)
 
         # 이미 친구 추가를 요청한 경우 예외 처리
-        if check_friendrequest(user, user2):
+        if check_friend_status(user, user2, Friend.Status.SEND):
             raise ValidationError(detail="You already request friend.", code=status.HTTP_400_BAD_REQUEST)
 
         # 친구에게 친구 추가를 시도할 경우 예외 처리
-        if check_myfriend(user, user2):
+        if check_friend_status(user, user2, Friend.Status.ACCEPT):
             raise ValidationError(detail="You cannot add already friend as a friend.", code=status.HTTP_400_BAD_REQUEST)
 
-        # 친구 요청 보낸 사람 = user1
-        friend = Friend(
-            user1=user,
-            user2=user2,
-            user1_victory_num=0,
-            user2_victory_num=0,
-            status=Friend.Status.SEND
-        )
-        friend.save()
-
-        # 친구 요청 받은 사람 = user1
-        friend = Friend(
-            user1=user2,
-            user2=user,
-            user1_victory_num=0,
-            user2_victory_num=0,
-            status=Friend.Status.PEND
-        )
-        friend.save()
-
-        # 친구가 온라인에 있으면 소켓으로 보내기
-        if user2.is_online:
-            channel_layer = get_channel_layer()
-
-            async_to_sync(channel_layer.group_send)(
-                f"user_{user2.nickname}",
-            {
-                'type': 'request_friend',
-                'sender': user.nickname,
-                'message': f"{user.nickname} 님이 친구 요청을 보냈습니다!!"
-            }
+        # 차단당했는지 확인
+        if not check_friend_status(user2, user, Friend.Status.BLOCK):
+            # 친구 요청 보낸 사람 = user1
+            friend = Friend(
+                user1=user,
+                user2=user2,
+                user1_victory_num=0,
+                user2_victory_num=0,
+                status=Friend.Status.SEND
             )
+            friend.save()
+
+            # 친구 요청 받은 사람 = user1
+            friend = Friend(
+                user1=user2,
+                user2=user,
+                user1_victory_num=0,
+                user2_victory_num=0,
+                status=Friend.Status.PEND
+            )
+            friend.save()
+
+            # 친구가 온라인에 있으면 소켓으로 보내기
+            if user2.is_online:
+                channel_layer = get_channel_layer()
+
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{user2.nickname}",
+                {
+                    'type': 'request_friend',
+                    'sender': user.nickname,
+                    'message': f"{user.nickname} 님이 친구 요청을 보냈습니다!!"
+                }
+                )
 
         return Response({"message": "Friend request sent."}, status=status.HTTP_201_CREATED)
     
@@ -132,22 +134,82 @@ class AcceptFriend(APIView) :
 
         return Response({"message": "친구관계 성립~"}, status=status.HTTP_200_OK)
 
-def check_myfriend(user, friend_nickname) :
+# 친구 차단
+class BlockFriend(APIView) :
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def post(self, request, friend_nickname):
+        user = request.user
+        try:
+            user2 = CustomUser.objects.get(nickname=friend_nickname)
+        except CustomUser.DoesNotExist:
+            raise NotFound(detail="Friend does not exist.", code=status.HTTP_404_NOT_FOUND)
+
+        try:
+            friend1 = Friend.objects.get(user1=user, user2=user2)
+        except Friend.DoesNotExist:
+            raise NotFound(detail="Friend relationship does not exist.", code=status.HTTP_404_NOT_FOUND)
+
+        friend1.status = "BL"
+        friend1.save()
+
+        return Response({"message": f"You blocked {friend_nickname}."}, status=status.HTTP_200_OK)
+
+#차단 해제
+class ReBlockFriend(APIView) :
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def post(self, request, friend_nickname):
+        user = request.user
+        try:
+            user2 = CustomUser.objects.get(nickname=friend_nickname)
+        except CustomUser.DoesNotExist:
+            raise NotFound(detail="Friend does not exist.", code=status.HTTP_404_NOT_FOUND)
+
+        try:
+            friend1 = Friend.objects.get(user1=user, user2=user2)
+        except Friend.DoesNotExist:
+            raise NotFound(detail="Friend relationship does not exist.", code=status.HTTP_404_NOT_FOUND)
+
+        friend1.status = "AC"
+        friend1.save()
+
+        return Response({"message": f"You reblocked {friend_nickname}."}, status=status.HTTP_200_OK)
+
+
+# 친구 삭제
+class DeleteFriend(APIView) :
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def post(self, request, friend_nickname) :
+        user = request.user
+        try:
+            user2 = CustomUser.objects.get(nickname=friend_nickname)
+        except CustomUser.DoesNotExist:
+            raise NotFound(detail="Friend does not exist.", code=status.HTTP_404_NOT_FOUND)
+
+        try:
+            friend1 = Friend.objects.get(user1=user, user2=user2)
+            friend2 = Friend.objects.get(user1=user2, user2=user)
+        except Friend.DoesNotExist:
+            raise NotFound(detail="Friend relationship does not exist.", code=status.HTTP_404_NOT_FOUND)
+
+        friend1.delete()
+        friend2.delete()
+
+        return Response({"message": f"You deleted {friend_nickname}."}, status=status.HTTP_200_OK)
+
+
+def check_friend_status(user, friend_nickname, status):
     friends = Friend.objects.filter(
         user1=user,
-        status=Friend.Status.ACCEPT
+        status=status
     ).select_related('user2')
 
     return friends.filter(user2__nickname=friend_nickname).exists()
-
-def check_friendrequest(user, friend_nickname) :
-    friends = Friend.objects.filter(
-        user1=user,
-        status=Friend.Status.SEND
-    ).select_related('user2')
-    return friends.filter(user2__nickname=friend_nickname).exists()
-
-#         return Response({"message": "Friend request sent."}, status=status.HTTP_201_CREATED)
 
 
 def get_my_friends_request(user) :
