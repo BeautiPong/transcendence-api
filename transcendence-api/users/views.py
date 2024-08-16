@@ -156,8 +156,16 @@ def login (request) :
         password = data.get('password')
 
         user = CustomUser.objects.filter(userID=userID).first()
-        # user가 DB에 있고 비밀번호가 맞다면
-        if user and check_password(password, user.password):
+
+        if user is None :
+            response = JsonResponse(
+                {"message": "존재하지 않는 아이디입니다."},
+                status=status.HTTP_401_UNAUTHORIZED)
+        elif check_password(password, user.password) == False :
+            response = JsonResponse(
+                {"message": "비밀번호가 틀렸습니다."},
+                status=status.HTTP_401_UNAUTHORIZED)
+        else :
             token = TokenObtainPairSerializer.get_token(user)  # refresh token 생성
             refresh_token = str(token)
             access_token = str(token.access_token)  # access token 생성
@@ -173,13 +181,6 @@ def login (request) :
             )
             response.set_cookie("access_token", access_token, httponly=True)
             response.set_cookie("refresh_token", refresh_token, httponly=True)
-        else:
-            response = JsonResponse(
-                {
-                    "message": "아이디 또는 비밀번호가 틀렸습니다."
-                },
-                status=status.HTTP_401_UNAUTHORIZED
-            )
         return response
 
 # 로그아웃
@@ -269,24 +270,6 @@ class UserRankingView(APIView):
 
         user_rank_serializer = UserRankingSerializer(user_rank)
         return Response(user_rank_serializer.data, status=status.HTTP_200_OK)
-
-
-# class WebSocketLoginView(APIView):
-#     permission_classes = [IsAuthenticated]
-#     authentication_classes = [JWTAuthentication]
-#
-#     def post(self, request):
-#         user = request.user
-#
-#         if not user:
-#             return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-#
-#         nickname = user.nickname
-#         return render(request, "users/login.html", {"nickname": nickname})
-
-# 친추뷰():
-# 	닉네임 받아
-# 	친추(닉네임)
 
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
