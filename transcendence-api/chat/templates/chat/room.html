@@ -84,7 +84,7 @@
             const message = messageInputDom.value;
 
             // 소켓으로 메시지 보내기
-            chatSocket.send(JSON.stringify({
+            chatSocket.send(JSON.stringify({ // consumer의 recieve로 가는 거 맞나?
                 'message': message,
                 'sender' : sender,
                 'roomName' : roomName
