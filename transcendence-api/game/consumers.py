@@ -14,7 +14,7 @@ class MatchingConsumer(AsyncWebsocketConsumer):
 
             await self.accept()
             if not self.room_name:
-                await self.channel_layer.group_add(f'user_{user.nickname}', self.channel_name)
+                await self.channel_layer.group_add(f'user_game_{user.nickname}', self.channel_name)
                 self.matchmaking_queue_key = 'matchmaking_queue'
 
                 await self.redis_client.lpush(self.matchmaking_queue_key, user.nickname)
@@ -53,14 +53,14 @@ class MatchingConsumer(AsyncWebsocketConsumer):
 
     async def create_game_room(self, user1_nickname, user2_nickname):
         await self.channel_layer.group_send(
-            f"user_{user1_nickname}",
+            f"user_game_{user1_nickname}",
             {
                 'type': 'join_game',
                 'room_name': self.room_name,
             }
         )
         await self.channel_layer.group_send(
-            f"user_{user2_nickname}",
+            f"user_game_{user2_nickname}",
             {
                 'type': 'join_game',
                 'room_name': self.room_name,

@@ -130,7 +130,7 @@ class AcceptGameView(APIView):
     def post(self, request, friend_nickname):
         user = request.user
 
-        room_name = f'game_{user.nickname}_{friend_nickname}'
+        room_name = f'{user.nickname}_{friend_nickname}'
         channel_layer = get_channel_layer()
 
         async_to_sync(channel_layer.group_send)(
@@ -153,17 +153,18 @@ class AcceptGameView(APIView):
 
 class MatchingView(APIView):
     # permission_classes = [IsAuthenticated]
-    # authentication_classes = [JWTAuthentication]
+    authentication_classes = [JWTAuthentication]
 
     def get(self, request):
         token = request.GET.get('token')
-        room_name = request.GET.get('room_name')
+        waiting_room_name = request.GET.get('room_name')
+        room_name = f'game_{waiting_room_name}'
         user = request.user
 
         if room_name:
             channel_layer = get_channel_layer()
             async_to_sync(channel_layer.group_send)(
-                room_name,
+                waiting_room_name,
                 {
                     # 프론트에서 이거 보고 매칭 웹소켓 연결 시작해야 됨(룸 네임 주면서,,)
                     'type': 'start_game_with_friend',

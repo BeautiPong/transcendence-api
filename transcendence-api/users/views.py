@@ -271,18 +271,18 @@ class UserRankingView(APIView):
         return Response(user_rank_serializer.data, status=status.HTTP_200_OK)
 
 
-class WebSocketLoginView(APIView):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
-
-    def post(self, request):
-        user = request.user
-
-        if not user:
-            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-        
-        nickname = user.nickname
-        return render(request, "users/login.html", {"nickname": nickname})
+# class WebSocketLoginView(APIView):
+#     permission_classes = [IsAuthenticated]
+#     authentication_classes = [JWTAuthentication]
+#
+#     def post(self, request):
+#         user = request.user
+#
+#         if not user:
+#             return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+#
+#         nickname = user.nickname
+#         return render(request, "users/login.html", {"nickname": nickname})
 
 # 친추뷰():
 # 	닉네임 받아

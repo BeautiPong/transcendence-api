@@ -106,8 +106,8 @@ class AcceptFriend(APIView) :
         friend1 = Friend.objects.filter(user1=user, user2=user2).first()
         friend2 = Friend.objects.filter(user1=user2, user2=user).first()
 
-        friend1.status = Friend.Status.ACCEPT
-        friend2.status = Friend.Status.ACCEPT
+        friend1.status = "AC"
+        friend2.status = "AC"
 
         friend1.save()
         friend2.save()
