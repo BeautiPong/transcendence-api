@@ -109,7 +109,9 @@ CREATE TABLE public."chattingRoom_chattingroom" (
     id bigint NOT NULL,
     user1_id bigint NOT NULL,
     user2_id bigint NOT NULL,
-    name text
+    name text,
+    user1_is_in_chat_room boolean NOT NULL,
+    user2_is_in_chat_room boolean NOT NULL
 );
 
 
@@ -300,7 +302,8 @@ CREATE TABLE public.message_message (
     content text NOT NULL,
     created_at timestamp with time zone NOT NULL,
     room_id bigint NOT NULL,
-    sender_id bigint NOT NULL
+    sender_id bigint NOT NULL,
+    read_status character varying(10) NOT NULL
 );
 
 
@@ -451,11 +454,11 @@ CREATE TABLE public.users_customuser (
     is_staff boolean NOT NULL,
     date_joined timestamp with time zone NOT NULL,
     email character varying(254) NOT NULL,
-    match_cnt integer NOT NULL,
-    win_cnt integer NOT NULL,
+    is_in_game boolean NOT NULL,
     is_online boolean NOT NULL,
-    last_logout timestamp with time zone,
-    is_in_game boolean NOT NULL
+    last_logout timestamp with time zone NOT NULL,
+    match_cnt integer NOT NULL,
+    win_cnt integer NOT NULL
 );
 
 
@@ -613,9 +616,9 @@ COPY public.auth_permission (id, name, content_type_id, codename) FROM stdin;
 -- Data for Name: chattingRoom_chattingroom; Type: TABLE DATA; Schema: public; Owner: beautipong
 --
 
-COPY public."chattingRoom_chattingroom" (id, user1_id, user2_id, name) FROM stdin;
-1	3	2	chat_dongseo_ttt
-2	4	2	chat_dongseo_qqq
+COPY public."chattingRoom_chattingroom" (id, user1_id, user2_id, name, user1_is_in_chat_room, user2_is_in_chat_room) FROM stdin;
+1	2	1	chat_dongseo_ttt	f	f
+2	3	1	chat_dongseo_qqq	f	f
 \.
 
 
@@ -654,52 +657,48 @@ COPY public.django_content_type (id, app_label, model) FROM stdin;
 --
 
 COPY public.django_migrations (id, app, name, applied) FROM stdin;
-1	contenttypes	0001_initial	2024-08-13 07:57:49.332871+00
-2	contenttypes	0002_remove_content_type_name	2024-08-13 07:57:49.34828+00
-3	auth	0001_initial	2024-08-13 07:57:49.362808+00
-4	auth	0002_alter_permission_name_max_length	2024-08-13 07:57:49.364866+00
-5	auth	0003_alter_user_email_max_length	2024-08-13 07:57:49.366836+00
-6	auth	0004_alter_user_username_opts	2024-08-13 07:57:49.368691+00
-7	auth	0005_alter_user_last_login_null	2024-08-13 07:57:49.37061+00
-8	auth	0006_require_contenttypes_0002	2024-08-13 07:57:49.371253+00
-9	auth	0007_alter_validators_add_error_messages	2024-08-13 07:57:49.373126+00
-10	auth	0008_alter_user_username_max_length	2024-08-13 07:57:49.374925+00
-11	auth	0009_alter_user_last_name_max_length	2024-08-13 07:57:49.37674+00
-12	auth	0010_alter_group_name_max_length	2024-08-13 07:57:49.378645+00
-13	auth	0011_update_proxy_permissions	2024-08-13 07:57:49.380743+00
-14	auth	0012_alter_user_first_name_max_length	2024-08-13 07:57:49.383162+00
-15	users	0001_initial	2024-08-13 07:57:49.397139+00
-16	admin	0001_initial	2024-08-13 07:57:49.40556+00
-17	admin	0002_logentry_remove_auto_add	2024-08-13 07:57:49.408077+00
-18	admin	0003_logentry_add_action_flag_choices	2024-08-13 07:57:49.410569+00
-19	chattingRoom	0001_initial	2024-08-13 07:57:49.416566+00
-20	friend	0001_initial	2024-08-13 07:57:49.422259+00
-21	friend	0002_alter_friend_status	2024-08-13 07:57:49.425993+00
-22	game	0001_initial	2024-08-13 07:57:49.432191+00
-23	message	0001_initial	2024-08-13 07:57:49.440219+00
-24	otp	0001_initial	2024-08-13 07:57:49.445483+00
-25	scoreHistory	0001_initial	2024-08-13 07:57:49.451186+00
-26	sessions	0001_initial	2024-08-13 07:57:49.455013+00
-27	token_blacklist	0001_initial	2024-08-13 07:57:49.468868+00
-28	token_blacklist	0002_outstandingtoken_jti_hex	2024-08-13 07:57:49.473211+00
-29	token_blacklist	0003_auto_20171017_2007	2024-08-13 07:57:49.478378+00
-30	token_blacklist	0004_auto_20171017_2013	2024-08-13 07:57:49.48478+00
-31	token_blacklist	0005_remove_outstandingtoken_jti	2024-08-13 07:57:49.488756+00
-32	token_blacklist	0006_auto_20171017_2113	2024-08-13 07:57:49.49285+00
-33	token_blacklist	0007_auto_20171017_2214	2024-08-13 07:57:49.502558+00
-34	token_blacklist	0008_migrate_to_bigautofield	2024-08-13 07:57:49.518771+00
-35	token_blacklist	0010_fix_migrate_to_bigautofield	2024-08-13 07:57:49.525016+00
-36	token_blacklist	0011_linearizes_history	2024-08-13 07:57:49.525661+00
-37	token_blacklist	0012_alter_outstandingtoken_user	2024-08-13 07:57:49.53009+00
-38	users	0002_alter_customuser_userid	2024-08-13 07:57:49.536463+00
-39	users	0003_customuser_match_cnt_customuser_win_cnt_and_more	2024-08-13 07:57:49.547502+00
-40	users	0004_alter_customuser_image	2024-08-13 07:57:49.551771+00
-41	users	0005_alter_customuser_is_active	2024-08-13 07:57:49.55651+00
-42	users	0006_alter_customuser_is_active	2024-08-13 07:57:49.560261+00
-43	chattingRoom	0002_chattingroom_name	2024-08-19 00:00:34.78784+00
-44	friend	0003_friend_create_time	2024-08-19 00:00:34.79273+00
-45	users	0005_customuser_is_online_customuser_last_logout_and_more	2024-08-19 00:00:34.804776+00
-46	users	0006_customuser_is_in_game	2024-08-19 00:00:34.809475+00
+1	contenttypes	0001_initial	2024-08-19 04:48:54.803923+00
+2	contenttypes	0002_remove_content_type_name	2024-08-19 04:48:54.806188+00
+3	auth	0001_initial	2024-08-19 04:48:54.819988+00
+4	auth	0002_alter_permission_name_max_length	2024-08-19 04:48:54.822495+00
+5	auth	0003_alter_user_email_max_length	2024-08-19 04:48:54.824428+00
+6	auth	0004_alter_user_username_opts	2024-08-19 04:48:54.826271+00
+7	auth	0005_alter_user_last_login_null	2024-08-19 04:48:54.828186+00
+8	auth	0006_require_contenttypes_0002	2024-08-19 04:48:54.828782+00
+9	auth	0007_alter_validators_add_error_messages	2024-08-19 04:48:54.830858+00
+10	auth	0008_alter_user_username_max_length	2024-08-19 04:48:54.832923+00
+11	auth	0009_alter_user_last_name_max_length	2024-08-19 04:48:54.834765+00
+12	auth	0010_alter_group_name_max_length	2024-08-19 04:48:54.836765+00
+13	auth	0011_update_proxy_permissions	2024-08-19 04:48:54.8387+00
+14	auth	0012_alter_user_first_name_max_length	2024-08-19 04:48:54.84051+00
+15	users	0001_initial	2024-08-19 04:48:54.855472+00
+16	admin	0001_initial	2024-08-19 04:48:54.865031+00
+17	admin	0002_logentry_remove_auto_add	2024-08-19 04:48:54.867586+00
+18	admin	0003_logentry_add_action_flag_choices	2024-08-19 04:48:54.870135+00
+19	chattingRoom	0001_initial	2024-08-19 04:48:54.875544+00
+20	chattingRoom	0002_chattingroom_name	2024-08-19 04:48:54.878935+00
+21	chattingRoom	0003_chattingroom_user1_is_in_chat_room_and_more	2024-08-19 04:48:54.883996+00
+22	friend	0001_initial	2024-08-19 04:48:54.890238+00
+23	friend	0002_alter_friend_status	2024-08-19 04:48:54.89383+00
+24	friend	0003_friend_create_time	2024-08-19 04:48:54.897153+00
+25	game	0001_initial	2024-08-19 04:48:54.904683+00
+26	message	0001_initial	2024-08-19 04:48:54.911917+00
+27	message	0002_message_read_status	2024-08-19 04:48:54.915458+00
+28	otp	0001_initial	2024-08-19 04:48:54.92194+00
+29	scoreHistory	0001_initial	2024-08-19 04:48:54.927603+00
+30	sessions	0001_initial	2024-08-19 04:48:54.932413+00
+31	token_blacklist	0001_initial	2024-08-19 04:48:54.946587+00
+32	token_blacklist	0002_outstandingtoken_jti_hex	2024-08-19 04:48:54.950807+00
+33	token_blacklist	0003_auto_20171017_2007	2024-08-19 04:48:54.956722+00
+34	token_blacklist	0004_auto_20171017_2013	2024-08-19 04:48:54.962262+00
+35	token_blacklist	0005_remove_outstandingtoken_jti	2024-08-19 04:48:54.966448+00
+36	token_blacklist	0006_auto_20171017_2113	2024-08-19 04:48:54.970733+00
+37	token_blacklist	0007_auto_20171017_2214	2024-08-19 04:48:54.981064+00
+38	token_blacklist	0008_migrate_to_bigautofield	2024-08-19 04:48:54.996165+00
+39	token_blacklist	0010_fix_migrate_to_bigautofield	2024-08-19 04:48:55.002975+00
+40	token_blacklist	0011_linearizes_history	2024-08-19 04:48:55.00364+00
+41	token_blacklist	0012_alter_outstandingtoken_user	2024-08-19 04:48:55.007753+00
+42	users	0002_customuser_is_in_game_customuser_is_online_and_more	2024-08-19 04:48:55.042633+00
 \.
 
 
@@ -716,10 +715,10 @@ COPY public.django_session (session_key, session_data, expire_date) FROM stdin;
 --
 
 COPY public.friend_friend (id, user1_victory_num, user2_victory_num, status, user1_id, user2_id, create_time) FROM stdin;
-2	0	0	AC	3	2	2024-08-19 00:02:43.756863+00
-1	0	0	AC	2	3	2024-08-19 00:02:43.755005+00
-4	0	0	AC	4	2	2024-08-19 00:02:48.353079+00
-3	0	0	AC	2	4	2024-08-19 00:02:48.351156+00
+4	0	0	AC	2	1	2024-08-19 04:52:51.102212+00
+3	0	0	AC	1	2	2024-08-19 04:52:51.100925+00
+2	0	0	AC	3	1	2024-08-19 04:52:46.616803+00
+1	0	0	AC	1	3	2024-08-19 04:52:46.615211+00
 \.
 
 
@@ -735,7 +734,7 @@ COPY public.game_game (id, user1_score, user2_score, create_time, user1_id, user
 -- Data for Name: message_message; Type: TABLE DATA; Schema: public; Owner: beautipong
 --
 
-COPY public.message_message (id, content, created_at, room_id, sender_id) FROM stdin;
+COPY public.message_message (id, content, created_at, room_id, sender_id, read_status) FROM stdin;
 \.
 
 
@@ -768,15 +767,9 @@ COPY public.token_blacklist_blacklistedtoken (id, blacklisted_at, token_id) FROM
 --
 
 COPY public.token_blacklist_outstandingtoken (id, token, created_at, expires_at, user_id, jti) FROM stdin;
-1	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNDE0MDg0OCwiaWF0IjoxNzIzNTM2MDQ4LCJqdGkiOiI4OTFjZDY3MTI1NTM0NmIxYmY2OWFjYzRjMzhmMzY1MyIsInVzZXJfaWQiOjJ9.WQaj0XqdCSaUu3OYI-AjROjOB_RYWPK5hvaD_gfQxWc	2024-08-13 08:00:48.645826+00	2024-08-20 08:00:48+00	2	891cd671255346b1bf69acc4c38f3653
-2	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNDE0MDkwMSwiaWF0IjoxNzIzNTM2MTAxLCJqdGkiOiJjNTRmZTBlMTg3YjQ0MDBmYWQ5OTE4ZWE0YmQ1OWE4YyIsInVzZXJfaWQiOjN9.S1l-J63oqE9pMc9CoRiE8h6ZzRKfEWxp9gEnkIbtkbE	2024-08-13 08:01:41.994207+00	2024-08-20 08:01:41+00	3	c54fe0e187b4400fad9918ea4bd59a8c
-3	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNDYzMDQ1OCwiaWF0IjoxNzI0MDI1NjU4LCJqdGkiOiJiMmFkZmE0N2ZiNTQ0ZmU3ODFlYjNmOTVmZGYxNGQ5MCIsInVzZXJfaWQiOjJ9.WM6dGJVlU8p-LSh5ju4ba5ufJnQs451ntASQv0YwZy4	2024-08-19 00:00:58.051084+00	2024-08-26 00:00:58+00	2	b2adfa47fb544fe781eb3f95fdf14d90
-4	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNDYzMDQ5NSwiaWF0IjoxNzI0MDI1Njk1LCJqdGkiOiI1YmVmYTIzZWM1NTQ0MmIyYWFhMWNlMTY5OTIxZjQ0OSIsInVzZXJfaWQiOjN9.PiEKy_27cDGGbwUA0e4TxvGK0ox4YJlob1FVKkCtgnE	2024-08-19 00:01:35.757461+00	2024-08-26 00:01:35+00	3	5befa23ec55442b2aaa1ce169921f449
-5	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNDYzMDUzMSwiaWF0IjoxNzI0MDI1NzMxLCJqdGkiOiJiOTkzYzk2NDJlNDM0MTJiOWE5NWU0YWJmNWFkNjA2NSIsInVzZXJfaWQiOjR9.9BMXuz1OZTmtzWdj8FaovYfS7wizakJQXWFC0r5uETM	2024-08-19 00:02:11.162498+00	2024-08-26 00:02:11+00	4	b993c9642e43412b9a95e4abf5ad6065
-6	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNDYzMjM4NCwiaWF0IjoxNzI0MDI3NTg0LCJqdGkiOiJiYjQxYjU3NmI4MmE0MTI0OTVjOTFlMDRmNGQxMTFiNSIsInVzZXJfaWQiOjJ9.oz1NVoyaCiOcpG2x2k-tUoWuqlHbMy7ffXyoaugE_2A	2024-08-19 00:33:04.771142+00	2024-08-26 00:33:04+00	2	bb41b576b82a412495c91e04f4d111b5
-7	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNDYzMjM5OSwiaWF0IjoxNzI0MDI3NTk5LCJqdGkiOiI0NTg5NDM1NmE4YjA0NzY4YTk2ODJmODY3NTRmNzc4NSIsInVzZXJfaWQiOjN9.uHkRs7-VAb_OMp7UD-cWNRWoT7Fsrbq3dScByZ5soUU	2024-08-19 00:33:19.930176+00	2024-08-26 00:33:19+00	3	45894356a8b04768a9682f86754f7785
-8	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNDYzMjQxMiwiaWF0IjoxNzI0MDI3NjEyLCJqdGkiOiJjZmEyMjlmOGVmZmI0YmY5OWJkZTFkNjdkMzk5NDAyMyIsInVzZXJfaWQiOjR9.YG7kE1yYggED-Hlpe_W__9Su9AG_593vFkuMC_3wdSQ	2024-08-19 00:33:32.242742+00	2024-08-26 00:33:32+00	4	cfa229f8effb4bf99bde1d67d3994023
-9	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNDYzMjQ4MCwiaWF0IjoxNzI0MDI3NjgwLCJqdGkiOiJjY2EwZjI4NWEwMDc0Y2E4YmYwNzFlOTgwOTk3YTI3YyIsInVzZXJfaWQiOjR9.2swVQM1_YAtIMMHwBZkBmoHK_gKdSzqE-xXgDksvSxY	2024-08-19 00:34:40.284005+00	2024-08-26 00:34:40+00	4	cca0f285a0074ca8bf071e980997a27c
+1	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNDY0NzkzNiwiaWF0IjoxNzI0MDQzMTM2LCJqdGkiOiI0MmM4NGY4YWU4YjE0YjI0ODkxYTUwMDliYzliODQ5NCIsInVzZXJfaWQiOjF9._SvxE-TTG-pjJGpMxP1imOlDUx4v6EeUuJgYn1mX5yc	2024-08-19 04:52:16.765886+00	2024-08-26 04:52:16+00	1	42c84f8ae8b14b24891a5009bc9b8494
+2	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNDY0Nzk0MCwiaWF0IjoxNzI0MDQzMTQwLCJqdGkiOiI3NTc5Zjg4ZmMyYmE0ZTk3ODU4OGMxMzdjNDllZGRlYiIsInVzZXJfaWQiOjJ9.7qLxJ4J4fP8CVwEO0lsBDhMsk07eromV-u7lDhxuryw	2024-08-19 04:52:20.516684+00	2024-08-26 04:52:20+00	2	7579f88fc2ba4e978588c137c49eddeb
+3	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNDY0Nzk0NCwiaWF0IjoxNzI0MDQzMTQ0LCJqdGkiOiI0MmQ1OTUyYjU4YmI0OWNlYWUxM2UzNTliYzE1YWIwZiIsInVzZXJfaWQiOjN9.IkIJ_P2QX1V8RnBk53N81mqk7FiSD9Cl7WhHKu18jxM	2024-08-19 04:52:24.665254+00	2024-08-26 04:52:24+00	3	42d5952b58bb49ceae13e359bc15ab0f
 \.
 
 
@@ -784,10 +777,10 @@ COPY public.token_blacklist_outstandingtoken (id, token, created_at, expires_at,
 -- Data for Name: users_customuser; Type: TABLE DATA; Schema: public; Owner: beautipong
 --
 
-COPY public.users_customuser (id, password, last_login, is_superuser, nickname, "userID", "oauthID", score, image, is_active, is_staff, date_joined, email, match_cnt, win_cnt, is_online, last_logout, is_in_game) FROM stdin;
-2	pbkdf2_sha256$600000$484IISnLZusSnix97w4c4p$bxGJpQpw47c7nuZiyo/CNaiXjNZVTwjUKV+JMl7CZoI=	\N	f	dongseo	dongseo	\N	1000	\N	t	f	2024-08-13 08:00:23.978217+00	dongseo@stu	0	0	t	2024-08-19 00:41:37.774116+00	f
-3	pbkdf2_sha256$600000$guceJFAorgZslllzSffJWq$XKJF7LzYkxB5PYN7y8cyX4r0fmIv+fHQrvBPkexal70=	\N	f	ttt	tt	\N	1000	\N	t	f	2024-08-13 08:01:37.164766+00	tt@naver.com	0	0	t	2024-08-19 00:41:53.857112+00	f
-4	pbkdf2_sha256$600000$iytRvGXmWSyvB6GsU44rtm$x6xJvocsGd/d9Q+muWDSL95+bIFDl1ZvfV5/+akglIk=	\N	f	qqq	qq	\N	1000	\N	t	f	2024-08-19 00:02:02.017777+00	test@test	0	0	t	2024-08-19 00:41:55.520694+00	f
+COPY public.users_customuser (id, password, last_login, is_superuser, nickname, "userID", "oauthID", score, image, is_active, is_staff, date_joined, email, is_in_game, is_online, last_logout, match_cnt, win_cnt) FROM stdin;
+1	pbkdf2_sha256$600000$p49xPHhmHaW1NR7QSFZWaG$wlTC4ktZx/a66YPC0CgTQ2MCHSYOyQ3dOxkqpANTMyM=	\N	f	dongseo	dongseo	\N	1000	\N	t	f	2024-08-19 04:50:50.260779+00	dongseo@com	f	f	2024-08-19 04:50:50.095345+00	0	0
+2	pbkdf2_sha256$600000$F38M0rIGqP6R01c2Vq2XZR$x9Wm2mBo1LZ8Bk+4Zbvg5ifUVswgWQBnDL64LoDij9o=	\N	f	ttt	tt	\N	1000	\N	t	f	2024-08-19 04:51:29.308751+00	tt@com	f	f	2024-08-19 04:51:29.14337+00	0	0
+3	pbkdf2_sha256$600000$iwgZ2ot13G06xmmtrKsB3t$ulywcypcW63UzbnxEfTpfl/DDz7v9T7bqeowqnmyKEE=	\N	f	qqq	qq	\N	1000	\N	t	f	2024-08-19 04:51:41.902158+00	test@test	f	f	2024-08-19 04:51:41.736611+00	0	0
 \.
 
 
@@ -853,7 +846,7 @@ SELECT pg_catalog.setval('public.django_content_type_id_seq', 14, true);
 -- Name: django_migrations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: beautipong
 --
 
-SELECT pg_catalog.setval('public.django_migrations_id_seq', 46, true);
+SELECT pg_catalog.setval('public.django_migrations_id_seq', 42, true);
 
 
 --
@@ -902,7 +895,7 @@ SELECT pg_catalog.setval('public.token_blacklist_blacklistedtoken_id_seq', 1, fa
 -- Name: token_blacklist_outstandingtoken_id_seq; Type: SEQUENCE SET; Schema: public; Owner: beautipong
 --
 
-SELECT pg_catalog.setval('public.token_blacklist_outstandingtoken_id_seq', 9, true);
+SELECT pg_catalog.setval('public.token_blacklist_outstandingtoken_id_seq', 3, true);
 
 
 --
@@ -916,7 +909,7 @@ SELECT pg_catalog.setval('public.users_customuser_groups_id_seq', 1, false);
 -- Name: users_customuser_id_seq; Type: SEQUENCE SET; Schema: public; Owner: beautipong
 --
 
-SELECT pg_catalog.setval('public.users_customuser_id_seq', 4, true);
+SELECT pg_catalog.setval('public.users_customuser_id_seq', 3, true);
 
 
 --
