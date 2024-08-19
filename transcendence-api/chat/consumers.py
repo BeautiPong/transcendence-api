@@ -24,7 +24,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_add(self.room_group_name, self.channel_name)
             await self.accept()
 
-            #아래꺼 await해야하나? 
+            #이거 await해야하나? 
             await self.set_connect_status(user)
 
         else:
@@ -35,12 +35,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # ChattingRoom의 is in chat room true로 변환.
             chattingroom = ChattingRoom.objects.filter(name=self.room_name).first()
             if(chattingroom.user1 == user):
-               print("user1")
                chattingroom.user1_is_in_chat_room = True
                chattingroom.save()
                sender = chattingroom.user2
             else:
-                print("user2")
                 chattingroom.user2_is_in_chat_room = True
                 chattingroom.save()
                 sender = chattingroom.user1
@@ -53,7 +51,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     # 연결 끊기
     async def disconnect(self, close_code):
-        # print("disconnect")
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
         await self.set_disconnect_status()
 
