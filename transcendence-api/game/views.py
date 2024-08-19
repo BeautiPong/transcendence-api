@@ -1,3 +1,4 @@
+import aioredis
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.shortcuts import render, redirect
@@ -111,6 +112,9 @@ class InviteGameView(APIView):
         if not friend.is_online:
             raise ValidationError(detail="You can invite only online friend.", code=status.HTTP_400_BAD_REQUEST)
 
+        if friend.is_in_game:
+            raise ValidationError(detail="You cannot invite a friend who is currently in a game.", code=status.HTTP_400_BAD_REQUEST)
+
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
             f"user_{friend.nickname}",
@@ -130,6 +134,20 @@ class AcceptGameView(APIView):
     def post(self, request, friend_nickname):
         user = request.user
 
+        try:
+            friend = CustomUser.objects.get(nickname=friend_nickname)
+        except CustomUser.DoesNotExist:
+            raise NotFound(detail="Friend does not exist.", code=status.HTTP_404_NOT_FOUND)
+
+        # 오프라인 상태인 친구의 게임 초대를 수락할 경우 예외 처리
+        if not friend.is_online:
+            raise ValidationError(detail="Cannot accept: friend is offline.", code=status.HTTP_400_BAD_REQUEST)
+
+        # 이미 게임 중인 친구의 게임 초대를 수락할 경우 예외 처리
+        if friend.is_in_game:
+            raise ValidationError(detail="Cannot accept: friend is in a game.", code=status.HTTP_400_BAD_REQUEST)
+
+        waiting_room = f'waiting_{friend_nickname}'
         room_name = f'{user.nickname}_{friend_nickname}'
         channel_layer = get_channel_layer()
 
@@ -137,6 +155,7 @@ class AcceptGameView(APIView):
             f"user_{friend_nickname}",
             {
                 'type': 'join_room',
+                'waiting_room': waiting_room,
                 'room_name': room_name,
             }
         )
@@ -145,6 +164,7 @@ class AcceptGameView(APIView):
             f"user_{user.nickname}",
             {
                 'type': 'join_room',
+                'waiting_room': waiting_room,
                 'room_name': room_name,
             }
         )
@@ -157,17 +177,18 @@ class MatchingView(APIView):
 
     def get(self, request):
         token = request.GET.get('token')
-        waiting_room_name = request.GET.get('room_name')
-        room_name = f'game_{waiting_room_name}'
+        waiting_room = request.GET.get('waiting_room')
+        room_name = request.GET.get('room_name')
         user = request.user
 
         if room_name:
             channel_layer = get_channel_layer()
             async_to_sync(channel_layer.group_send)(
-                waiting_room_name,
+                waiting_room,
                 {
                     # 프론트에서 이거 보고 매칭 웹소켓 연결 시작해야 됨(룸 네임 주면서,,)
                     'type': 'start_game_with_friend',
+                    'waiting_room': waiting_room,
                     'room_name': room_name,
                     'message': 'start game with friend'
                 }
@@ -175,6 +196,6 @@ class MatchingView(APIView):
             # return Response({"message": "Start Game with friend"}, status=status.HTTP_200_OK)
 
         if token:
-            return render(request, 'game/match.html', {'jwt_token': token, 'room_name': room_name})
+            return render(request, 'game/match.html', {'jwt_token': token, 'waiting_room': waiting_room, 'room_name': room_name})
         else:
             return redirect('/login_page/')
