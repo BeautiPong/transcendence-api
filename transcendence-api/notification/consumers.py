@@ -51,10 +51,9 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             sender = not_checked_message.sender
             notifications.append({
                 'type': 'pend_messages',
-                'sender': sender,
+                'sender': sender.nickname,
                 'message': f"{not_checked_message.content}"
             })
-
         return notifications
 
     async def send_notifications(self, user):
@@ -65,7 +64,8 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def set_user_active_status(self, user, status):
         user.is_online = status
-        user.last_logout = timezone.now()
+        if not status:
+            user.last_logout = timezone.now()
         user.save()
 
     async def request_friend(self, event):
