@@ -38,6 +38,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     image = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_online = models.BooleanField(default=False)
+    is_in_game = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
     email = models.EmailField(unique=True)
@@ -45,6 +46,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     win_cnt = models.IntegerField(default=0)
     last_login = models.DateTimeField(null=True, blank=True)
     last_logout = models.DateTimeField(default=timezone.now)
+
 
     objects = CustomUserManager()
 

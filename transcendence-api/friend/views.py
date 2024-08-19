@@ -116,8 +116,8 @@ class AcceptFriend(APIView) :
         if (friend1.status == "AC" or friend2.status == "AC") :
             raise ValidationError(detail="You already accept friend", code=status.HTTP_400_BAD_REQUEST)
 
-        friend1.status = "AC"
-        friend2.status = "AC"
+        friend1.status = Friend.Status.ACCEPT
+        friend2.status = Friend.Status.ACCEPT
 
         friend1.save()
         friend2.save()
