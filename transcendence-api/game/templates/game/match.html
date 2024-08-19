@@ -10,16 +10,19 @@
 <input id="chat-message-input" type="text" size="100"><br>
 <input id="chat-message-submit" type="button" value="Send">
 {{ jwt_token|json_script:"jwt_token" }}
+{{ waiting_room|json_script:"waiting_room" }}
 {{ room_name|json_script:"room_name" }}
 
 <script>
     const jwtToken = JSON.parse(document.getElementById('jwt_token').textContent);
+    const waitingRoom = JSON.parse(document.getElementById('waiting_room').textContent);
     const roomName = JSON.parse(document.getElementById('room_name').textContent);
 
     // WebSocket 연결 URL을 결정하는 로직
-    const socketUrl = roomName
-        ? 'ws://' + window.location.host + '/ws/match/' + roomName + '/?token=' + jwtToken
+    const socketUrl = waitingRoom && roomName
+        ? 'ws://' + window.location.host + '/ws/match/' + waitingRoom + '/' + roomName + '/?token=' + jwtToken
         : 'ws://' + window.location.host + '/ws/match/?token=' + jwtToken;
+
 
     const chatSocket = new WebSocket(socketUrl);
 
