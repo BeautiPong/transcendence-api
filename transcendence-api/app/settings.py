@@ -11,7 +11,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'daphne',
@@ -157,5 +157,6 @@ CHANNEL_LAYERS = {
 
 CORS_ORIGIN_WHITELIST = (
     "http://localhost:8080",
-    "http://localhost:5050",
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
 )
