@@ -9,3 +9,4 @@ channels
 daphne
 channels-redis
 aioredis
+django-cors-headers
