@@ -126,12 +126,17 @@ def join (request) :
     if user :
         return JsonResponse({"message": "이미 존재하는 이메일입니다."},
             status = status.HTTP_400_BAD_REQUEST)
+
+    user = CustomUser.objects.filter(userID=userID).first()
+    if user :
+        return JsonResponse({"message": "이미 존재하는 아이디입니다."},
+            status = status.HTTP_400_BAD_REQUEST)
     
     try:
         validator = CustomPasswordValidator()
         validator.validate(password=password)
     except ValidationError as e:
-        return JsonResponse({"errors": e.messages}, 
+        return JsonResponse({"message": " ".join(e.messages)}, 
             status=status.HTTP_400_BAD_REQUEST)
 
 
