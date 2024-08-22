@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
-
+from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.authentication    import JWTAuthentication
 from rest_framework_simplejwt.serializers       import *
 from rest_framework_simplejwt.exceptions        import InvalidToken, TokenError
@@ -22,6 +22,7 @@ import requests
 import re
 import json
 from users.utils import get_user_info
+from datetime import timedelta
 
 
 # Create your views here.
@@ -151,6 +152,35 @@ def join (request) :
         return JsonResponse({"message": "회원가입 성공!"},
             status = status.HTTP_200_OK)
 
+#아이디비번 확인
+@csrf_exempt
+def check_user(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        userID = data.get('userID')
+        password = data.get('password')
+
+        user = CustomUser.objects.filter(userID=userID).first()
+
+        if user is None:
+            return JsonResponse(
+                {"message": "존재하지 않는 아이디입니다."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        elif not check_password(password, user.password):
+            return JsonResponse(
+                {"message": "비밀번호가 틀렸습니다."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        else:
+            # 2FA를 위한 임시 JWT 토큰 발급
+            temp_token = AccessToken.for_user(user)
+            temp_token.set_exp(lifetime=timedelta(minutes=10))  # 토큰 유효 기간을 10분으로 설정
+
+            return JsonResponse(
+                {"message": "아이디 비번 확인되었습니다.", "temp_token": str(temp_token)},
+                status=status.HTTP_200_OK
+            )
 
 # 자체 로그인
 @csrf_exempt
