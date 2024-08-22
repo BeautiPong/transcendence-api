@@ -22,6 +22,7 @@ import requests
 import re
 import json
 from users.utils import get_user_info
+from datetime import timedelta
 
 
 # Create your views here.
@@ -177,40 +178,40 @@ def check_user(request):
             )
 
 # 자체 로그인
-# @csrf_exempt
-# def login (request) :
-#     if request.method == 'POST' :
-#         data = json.loads(request.body)
-#         userID = data.get('userID')
-#         password = data.get('password')
+@csrf_exempt
+def login (request) :
+    if request.method == 'POST' :
+        data = json.loads(request.body)
+        userID = data.get('userID')
+        password = data.get('password')
 
-#         user = CustomUser.objects.filter(userID=userID).first()
+        user = CustomUser.objects.filter(userID=userID).first()
 
-#         if user is None :
-#             response = JsonResponse(
-#                 {"message": "존재하지 않는 아이디입니다."},
-#                 status=status.HTTP_401_UNAUTHORIZED)
-#         elif check_password(password, user.password) == False :
-#             response = JsonResponse(
-#                 {"message": "비밀번호가 틀렸습니다."},
-#                 status=status.HTTP_401_UNAUTHORIZED)
-#         else :
-#             token = TokenObtainPairSerializer.get_token(user)  # refresh token 생성
-#             refresh_token = str(token)
-#             access_token = str(token.access_token)  # access token 생성
-#             response = JsonResponse(
-#                 {
-#                     "message": "로그인 성공",
-#                     "jwt_token": {
-#                         "access_token": access_token,
-#                         "refresh_token": refresh_token
-#                     },
-#                 },
-#                 status=status.HTTP_200_OK
-#             )
-#             response.set_cookie("access_token", access_token, httponly=True)
-#             response.set_cookie("refresh_token", refresh_token, httponly=True)
-#         return response
+        if user is None :
+            response = JsonResponse(
+                {"message": "존재하지 않는 아이디입니다."},
+                status=status.HTTP_401_UNAUTHORIZED)
+        elif check_password(password, user.password) == False :
+            response = JsonResponse(
+                {"message": "비밀번호가 틀렸습니다."},
+                status=status.HTTP_401_UNAUTHORIZED)
+        else :
+            token = TokenObtainPairSerializer.get_token(user)  # refresh token 생성
+            refresh_token = str(token)
+            access_token = str(token.access_token)  # access token 생성
+            response = JsonResponse(
+                {
+                    "message": "로그인 성공",
+                    "jwt_token": {
+                        "access_token": access_token,
+                        "refresh_token": refresh_token
+                    },
+                },
+                status=status.HTTP_200_OK
+            )
+            response.set_cookie("access_token", access_token, httponly=True)
+            response.set_cookie("refresh_token", refresh_token, httponly=True)
+        return response
 
 # 로그아웃
 class LogoutView(APIView) :
