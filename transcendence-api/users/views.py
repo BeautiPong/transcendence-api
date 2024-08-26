@@ -132,8 +132,7 @@ def join (request) :
         validator = CustomPasswordValidator()
         validator.validate(password=password)
     except ValidationError as e:
-        return JsonResponse({"errors": e.messages}, 
-            status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({"message": e.message}, status=status.HTTP_400_BAD_REQUEST)
 
 
     # 사용자가 이미 회원가입을 했는지 확인
