@@ -53,7 +53,7 @@ class MatchingConsumer(AsyncWebsocketConsumer):
         user.save()
 
     async def check_room_capacity(self, room_name):
-        group_users = await self.channel_layer.group_channels(room_name)
+        group_users = await self.redis_client.smembers(f"group_{room_name}")
         return len(group_users)
 
     async def match_users(self):
@@ -92,6 +92,7 @@ class MatchingConsumer(AsyncWebsocketConsumer):
             return
 
         await self.channel_layer.group_add(self.room_name, self.channel_name)
+        await self.redis_client.sadd(f"group_{self.room_name}", self.scope['user'].nickname)
         await self.check_and_start_game()
 
     async def game_start(self, event):
