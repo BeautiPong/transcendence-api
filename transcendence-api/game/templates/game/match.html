@@ -2,11 +2,11 @@
 <html>
 <head>
     <meta charset="utf-8"/>
-    <title>match test</title>
+    <title>Game Matching</title>
 </head>
 <body>
-<h1>게임매칭 테스트</h1>
-<textarea id="chat-log" cols="100" rows="20"></textarea><br>
+<h1>게임 매칭 테스트</h1>
+<textarea id="chat-log" cols="100" rows="20" readonly></textarea><br>
 <input id="chat-message-input" type="text" size="100"><br>
 <input id="chat-message-submit" type="button" value="Send">
 {{ jwt_token|json_script:"jwt_token" }}
@@ -23,7 +23,6 @@
         ? 'ws://' + window.location.host + '/ws/match/' + waitingRoom + '/' + roomName + '/?token=' + jwtToken
         : 'ws://' + window.location.host + '/ws/match/?token=' + jwtToken;
 
-
     const chatSocket = new WebSocket(socketUrl);
 
     chatSocket.onmessage = function(e) {
@@ -32,7 +31,19 @@
         console.log("Received data:", data);
 
         document.querySelector('#chat-log').value += (`서버로부터 받은 데이터: ${JSON.stringify(data, null, 2)}\n`);
+
+        // 매칭 성공 메시지를 확인하고 게임 페이지로 리다이렉트
+        if (data.type === 'game_start') {
+            // room_name이 undefined가 아닌지 확인
+            if (data.room_name) {
+                // 게임 페이지로 리다이렉트
+                window.location.href = '/api/game/' + data.room_name + '/';  // 게임 페이지 URL로 리다이렉트
+            } else {
+                console.error('room_name is undefined');
+            }
+        }
     };
+
 
     chatSocket.onclose = function(e) {
         console.error('Chat socket closed unexpectedly');
