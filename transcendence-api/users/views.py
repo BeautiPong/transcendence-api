@@ -39,7 +39,7 @@ def get_code(request):
 def get_token(request):
     code = request.GET.get('code')  # 유저가 받은 코드를 여기에 입력합니다.
     client_id = 'u-s4t2ud-5165cfc59957b2a5cd674a6fc909e1e94378eff8b68d30144cbf571ed0b80ea1'  # 42에서 제공한 클라이언트 ID
-    client_secret = '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'  # 42에서 제공한 클라이언트 시크릿
+    client_secret = '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'  # 42에서 제공한 클라이언트 시크릿
     redirect_uri = 'http://localhost:8000/'  # 이전에 사용한 리디렉션 URL
     grant_type = 'authorization_code'
     scope = 'public profile'  # 42에서 제공한 스코프
