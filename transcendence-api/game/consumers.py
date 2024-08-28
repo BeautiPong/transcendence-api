@@ -1,7 +1,8 @@
+import asyncio
+import aioredis
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
-
-
+import json
 class MatchingConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         user = self.scope['user']
@@ -130,69 +131,15 @@ class MatchingConsumer(AsyncWebsocketConsumer):
         }))
 
 
-import asyncio
-from channels.generic.websocket import AsyncWebsocketConsumer
-import aioredis
-import json
-
-from channels.db import database_sync_to_async
-from channels.generic.websocket import AsyncWebsocketConsumer
-import json
-import asyncio
-import aioredis
-
-from channels.db import database_sync_to_async
-from channels.generic.websocket import AsyncWebsocketConsumer
-import json
-import asyncio
-import aioredis
-
-from channels.db import database_sync_to_async
-from channels.generic.websocket import AsyncWebsocketConsumer
-import json
-import aioredis
-
-import asyncio
-import json
-from channels.generic.websocket import AsyncWebsocketConsumer
-import aioredis
-
-import asyncio
-from channels.generic.websocket import AsyncWebsocketConsumer
-import aioredis
-import json
-
-import asyncio
-from channels.generic.websocket import AsyncWebsocketConsumer
-import aioredis
-import json
-
-import asyncio
-from channels.generic.websocket import AsyncWebsocketConsumer
-import aioredis
-import json
-
-
-import asyncio
-from channels.generic.websocket import AsyncWebsocketConsumer
-import aioredis
-import json
-
-
-import asyncio
-from channels.generic.websocket import AsyncWebsocketConsumer
-import aioredis
-import json
-import asyncio
-from channels.generic.websocket import AsyncWebsocketConsumer
-import aioredis
-import json
-
 class GameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.user = self.scope['user']
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.player_name = self.user.nickname
+
+        # room_name을 '_'로 분리하여 두 플레이어의 닉네임을 가져옵니다.
+        _, name1, name2 = self.room_name.split('_')
+
         await self.channel_layer.group_add(self.room_name, self.channel_name)
         await self.accept()
 
@@ -211,14 +158,22 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         # 플레이어 설정 및 클라이언트에게 역할 전달
         if players_in_room == 1:
-            self.current_player = 'player1'
+            if self.player_name == name1:
+                self.players = {'player1': name1, 'player2': name2}
+            else:
+                self.players = {'player1': name2, 'player2': name1}
+
             print(f"{self.player_name} is player1 in room {self.room_name}")
             await self.send(text_data=json.dumps({
                 'type': 'assign_role',
                 'role': 'player1'
             }))
         elif players_in_room == 2:
-            self.current_player = 'player2'
+            if self.player_name == name1:
+                self.players = {'player1': name2, 'player2': name1}
+            else:
+                self.players = {'player1': name1, 'player2': name2}
+
             print(f"{self.player_name} is player2 in room {self.room_name}")
             await self.send(text_data=json.dumps({
                 'type': 'assign_role',
@@ -243,9 +198,9 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             # 패들 움직임 범위 제한 및 위치 업데이트
             if player == 'player1':
-                self.paddle_positions['player1'] = max(-0.75, min(0.75, self.paddle_positions['player1'] + (-0.05 if direction == 'left' else 0.05)))
+                self.paddle_positions['player1'] = max(-0.75, min(0.75, self.paddle_positions['player1'] + (-0.05 if direction == 'right' else 0.05)))
             elif player == 'player2':
-                self.paddle_positions['player2'] = max(-0.75, min(0.75, self.paddle_positions['player2'] + (-0.05 if direction == 'left' else 0.05)))
+                self.paddle_positions['player2'] = max(-0.75, min(0.75, self.paddle_positions['player2'] + (-0.05 if direction == 'right' else 0.05)))
 
             await self.send_game_state()
 
@@ -276,31 +231,29 @@ class GameConsumer(AsyncWebsocketConsumer):
                 self.ball_velocity['x'] = -self.ball_velocity['x']
 
             # z축에서 패들에 부딪힐 경우 반사 또는 득점 처리
-            if self.ball_position['z'] >= 1.5:
+            if self.ball_position['z'] <= -1.5:
                 if abs(self.ball_position['x'] - self.paddle_positions['player1']) <= 0.25:
-                    # 공이 패들의 중앙에서 얼마나 떨어져 있는지 계산
                     offset = self.ball_position['x'] - self.paddle_positions['player1']
-                    # x 축 속도에 오프셋을 추가하여 궤도를 변경
-                    self.ball_velocity['x'] += offset * 0.1  # 여기서 0.1은 공이 튕기는 각도를 조절하는 값
+                    self.ball_velocity['x'] += offset * 0.1
                     self.ball_velocity['z'] = -self.ball_velocity['z']
                 else:
                     self.scores['player2'] += 1
-                    await self.reset_ball()
+                    if self.scores['player2'] >= 10:
+                        await self.end_game(winner=self.players['player2'])
+                    else:
+                        await self.reset_ball()
 
-            elif self.ball_position['z'] <= -1.5:
+            elif self.ball_position['z'] >= 1.5:
                 if abs(self.ball_position['x'] - self.paddle_positions['player2']) <= 0.25:
                     offset = self.ball_position['x'] - self.paddle_positions['player2']
                     self.ball_velocity['x'] += offset * 0.1
                     self.ball_velocity['z'] = -self.ball_velocity['z']
                 else:
                     self.scores['player1'] += 1
-                    await self.reset_ball()
-
-            # 게임 종료 조건: 점수가 10점에 도달한 경우
-            if self.scores['player1'] >= 10:
-                await self.end_game(winner='player1')
-            elif self.scores['player2'] >= 10:
-                await self.end_game(winner='player2')
+                    if self.scores['player1'] >= 10:
+                        await self.end_game(winner=self.players['player1'])
+                    else:
+                        await self.reset_ball()
 
         except Exception as e:
             print(f"Error in update_ball_position: {e}")
@@ -349,20 +302,34 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def end_game(self, winner):
         self.game_active = False  # 게임을 비활성화하여 루프 중지
+
+        # player1과 player2의 닉네임과 점수를 함께 보냅니다.
         await self.channel_layer.group_send(
             self.room_name,
             {
                 'type': 'game_over',
-                'winner': winner
+                'winner': winner,  # 이긴 플레이어의 닉네임
+                'scores': self.scores,  # 점수 정보
+                'player1': self.players['player1'],  # player1의 닉네임
+                'player2': self.players['player2']   # player2의 닉네임
             }
         )
 
     async def game_over(self, event):
         winner = event['winner']
+        scores = event['scores']
+        player1 = event['player1']
+        player2 = event['player2']
+
+        # 클라이언트에 승자, 점수, 플레이어 닉네임 정보를 전달합니다.
         await self.send(text_data=json.dumps({
             'type': 'game_over',
-            'winner': winner
+            'winner': winner,
+            'scores': scores,
+            'player1': player1,
+            'player2': player2
         }))
+
 
     async def check_room_capacity(self, room_name):
         return await self.redis_client.scard(f"group_{room_name}")

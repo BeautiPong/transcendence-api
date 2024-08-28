@@ -13,12 +13,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 {{ room_name|json_script:"room_name" }}
-{{ username|json_script:"username" }}
 {{ jwt_token|json_script:"jwt_token" }} <!-- JWT 토큰 추가 -->
 
 <script>
     const roomName = JSON.parse(document.getElementById('room_name').textContent);
-    const username = JSON.parse(document.getElementById('username').textContent);
     const jwtToken = JSON.parse(document.getElementById('jwt_token').textContent);  // JWT 토큰 읽기
 
     let scene, camera, renderer;
@@ -33,7 +31,7 @@
 
         // 카메라를 약간 기울여서 3D 효과를 더 부각
         camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 3, 5);  // 카메라 위치 조정 (y축과 z축을 높여서 기울임)
+        camera.position.set(0, 3, -5);  // 카메라 위치 조정 (y축과 z축을 높여서 기울임)
         camera.lookAt(0, 0, 0);  // 카메라가 0,0,0을 바라보게 설정
 
         renderer = new THREE.WebGLRenderer();
@@ -87,7 +85,6 @@
             console.log("Assigned role:", playerRole);
         }
 
-        //wrrrrrrrrrrrrrrrrrr
         if (data.type === 'game_state') {
             // 공의 z 좌표를 반전시킴
             let ballZPosition = data.ball_position.z;
@@ -98,19 +95,19 @@
 
             // 패들의 위치 설정
             if (playerRole === 'player1') {
-                paddle.position.set(data.paddle_positions.player1, 0.05, 1.8);
-                opponentPaddle.position.set(data.paddle_positions.player2, 0.05, -1.8);
+                paddle.position.set(data.paddle_positions.player1, 0.05, -1.8);
+                opponentPaddle.position.set(data.paddle_positions.player2, 0.05, 1.8);
             } else if (playerRole === 'player2') {
-                paddle.position.set(data.paddle_positions.player2, 0.05, 1.8);
-                opponentPaddle.position.set(data.paddle_positions.player1, 0.05, -1.8);
+                paddle.position.set(data.paddle_positions.player2, 0.05, -1.8);
+                opponentPaddle.position.set(data.paddle_positions.player1, 0.05, 1.8);
             }
         }
 
         if (data.type === 'game_over') {
-            alert("Game Over! Winner: " + data.winner);
+            // 게임 종료 시 승자, 점수 및 플레이어 닉네임을 표시
+            alert(`Game Over! Winner: ${data.winner}\n\nScores\n${data.player1}: ${data.scores.player1}\n${data.player2}: ${data.scores.player2}`);
         }
     };
-
 
     document.addEventListener('keydown', function(event) {
         let direction = null;
