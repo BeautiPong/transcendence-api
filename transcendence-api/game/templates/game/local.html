@@ -76,8 +76,8 @@
     scene.add(light);
 
     // 카메라 설정
-    camera.position.set(0, 200, 250);  // 카메라를 더 멀리 위로 올려 탁구대와 패들이 잘 보이도록 조정
-    camera.lookAt(0, 0, 0);  // 카메라가 중앙을 바라보도록 설정
+    camera.position.set(50, 150, 0);  // 카메라를 더 멀리 위치시켜 탁구대 전체가 보이도록 조정
+    camera.lookAt(50, 0, 0);
 
     // 애니메이션 렌더링
     function animate() {
@@ -95,15 +95,14 @@
             const player1_paddle_z = data.player1_paddle_z;
             const player2_paddle_z = data.player2_paddle_z;
 
-            // 공의 위치 업데이트 (x, z축)
-            ball.position.x = ball_position[0];
-            ball.position.z = ball_position[1];
+            // 공의 위치 업데이트
+            ball.position.x = ball_position[0] - tableWidth / 2;
+            ball.position.z = ball_position[1] - tableLength / 2;
 
-            // 패들의 위치 업데이트 (z축)
-            player1Paddle.position.z = player1_paddle_z;
-            player2Paddle.position.z = player2_paddle_z;
-
-            console.log("ball_position: ", ball_position);
+            // 패들의 위치 업데이트
+            player1Paddle.position.z = player1_paddle_z - tableLength / 2;
+            player2Paddle.position.z = player2_paddle_z - tableLength / 2;
+            console.log("player1_paddle_z:", player1_paddle_z, "player2_paddle_z:", player2_paddle_z);
         }
     };
 

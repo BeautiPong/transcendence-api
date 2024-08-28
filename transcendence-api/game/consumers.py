@@ -206,7 +206,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             self.game.move_paddle(player, direction)
 
             # 게임 상태를 업데이트하고 클라이언트에 다시 보내는 예시
-            self.game.move_ball()  # 공도 이동
+            # self.game.move_ball()  # 공도 이동
             game_state = self.game.get_game_state()
 
             # 모든 클라이언트에게 게임 상태를 전송 (broadcast)
@@ -246,6 +246,113 @@ class GameConsumer(AsyncWebsocketConsumer):
             'player1_paddle_x' : event['player1_paddle_x'],
             'player2_paddle_x' : event['player2_paddle_x'],
         }))
+
+    # async def update_ball_position(self):
+    #     self.ball_position['x'] += self.ball_velocity['x']
+    #     self.ball_position['y'] += self.ball_velocity['y']
+    #     self.ball_position['z'] += self.ball_velocity['z']
+
+    #     if self.ball_position['z'] <= -1.0 or self.ball_position['z'] >= 1.0:
+    #         if self.current_player == 'player1' and self.ball_position['z'] <= -1.0:
+    #             await self.handle_collision('player1')
+    #         elif self.current_player == 'player2' and self.ball_position['z'] >= 1.0:
+    #             await self.handle_collision('player2')
+
+    #     if abs(self.ball_position['x']) >= 0.5:
+    #         self.ball_velocity['x'] = -self.ball_velocity['x']
+
+    #     self.ball_velocity['y'] -= 0.0001
+
+    # async def handle_collision(self, player):
+    #     if player == 'player1' and abs(self.ball_position['x'] - self.paddle_positions['player1']) < 0.2:
+    #         self.ball_velocity['z'] = -self.ball_velocity['z']
+    #         self.current_player = 'player2'
+    #     elif player == 'player2' and abs(self.ball_position['x'] - self.paddle_positions['player2']) < 0.2:
+    #         self.ball_velocity['z'] = -self.ball_velocity['z']
+    #         self.current_player = 'player1'
+    #     else:
+    #         await self.end_game(winner='player2' if player == 'player1' else 'player1')
+
+    # async def send_game_state(self):
+    #     await self.send(text_data=json.dumps({
+    #         'type': 'game_state',
+    #         'ball_position': self.ball_position,
+    #         'paddle_positions': self.paddle_positions
+    #     }))
+
+    # async def end_game(self, winner):
+    #     await self.send(text_data=json.dumps({
+    #         'type': 'game_over',
+    #         'winner': winner
+    #     }))
+    #     await self.close()
+
+class OfflineConsumer(AsyncWebsocketConsumer):
+
+    async def connect(self):
+        self.user = self.scope['user']
+        self.userA_nickname = self.scope['url_route']['kwargs'].get('userA_nickname', None)
+        self.userB_nickname = self.scope['url_route']['kwargs'].get('userB_nickname', None)
+
+        print("local connect")
+        print("user =", self.user)
+        print("URL Route Kwargs:", self.scope['url_route']['kwargs'])
+        print("self.userA_nickname: ", self.userA_nickname)
+        print("self.userB_nickname: ", self.userB_nickname)
+        self.keep_running = True
+        await self.accept()
+        await self.send(text_data=json.dumps({
+            'type': 'game_start'
+        }))
+        asyncio.create_task(self.game_loop())
+        
+
+    async def disconnect(self, close_code):
+        self.keep_running = False
+        print("Gameconsumer WebSocket disconnected")
+        await self.channel_layer.group_discard(self.room_name, self.channel_name)
+
+    async def receive(self, text_data):
+        try:
+            data = json.loads(text_data)
+            # print("Received data:", data)  # 서버에서 받은 데이터를 출력해 확인
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON: {e}")
+        data = json.loads(text_data)
+
+        if 'key' in data:
+            # 패들을 움직이는 플레이어와 방향을 가져옴
+            
+            key = data['key']  # 예: 'left' 또는 'right'
+
+            # 이 정보를 바탕으로 게임 로직에서 패들 이동 처리
+            self.game.move_paddle(key)
+
+            # 게임 상태를 업데이트하고 클라이언트에 다시 보내는 예시
+            # self.game.move_ball()  # 공도 이동
+            game_state = self.game.get_game_state()
+
+            # 모든 클라이언트에게 게임 상태를 전송 (broadcast)
+            self.send(text_data=json.dumps(game_state))
+        
+
+    async def game_loop(self):
+        self.game = PingPongGame(100,50,10, self.userA_nickname, self.userB_nickname)
+        print("game created")
+        while (self.keep_running):
+            await asyncio.sleep(0.1)
+            self.game.move_ball()
+            state = self.game.get_game_state()
+            
+            await self.send(text_data=json.dumps({
+            'type': 'game_loop',
+            'state': state,
+            'ball_pos' : self.game.ball_pos,
+            'player1_paddle_z' : self.game.player1_paddle_z,
+            'player2_paddle_z' : self.game.player2_paddle_z,
+        }))
+        # if(game.player1_score == 5 or game.player2_score == 5):
+        #     break
 
     # async def update_ball_position(self):
     #     self.ball_position['x'] += self.ball_velocity['x']

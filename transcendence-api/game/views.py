@@ -202,9 +202,6 @@ class MatchingView(APIView):
             return redirect('/login_page/')
 
 def game_page(request, room_name):
-    # permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
-    print("request.user.username", request.user.username)
 
     # 게임 페이지에 필요한 정보를 컨텍스트로 전달
     print("test")
@@ -213,3 +210,21 @@ def game_page(request, room_name):
         'username': request.user.username  # 현재 로그인한 사용자의 이름
     }
     return render(request, 'game/game.html', context)
+
+
+
+def offline_page(request):
+    # permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+
+    token = request.GET.get('token')
+    userA_nickname = request.GET.get('userA_nickname')
+    userB_nickname = request.GET.get('userB_nickname')
+    
+    context = {
+        'token': token,
+        'userA_nickname': userA_nickname,
+        'userB_nickname': userB_nickname
+    }
+    return render(request, 'game/local.html', context)
