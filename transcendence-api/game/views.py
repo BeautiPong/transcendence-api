@@ -201,9 +201,11 @@ class MatchingView(APIView):
         else:
             return redirect('/login_page/')
 
-
-
 def game_page(request, room_name):
+    # permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    print("request.user.username", request.user.username)
+
     # 게임 페이지에 필요한 정보를 컨텍스트로 전달
     print("test")
     context = {
