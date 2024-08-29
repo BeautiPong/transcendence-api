@@ -201,8 +201,6 @@ class MatchingView(APIView):
         else:
             return redirect('/login_page/')
 
-
-
 def game_page(request, room_name):
     # JWT 토큰을 request 객체에서 가져오기
     token = request.GET.get('token')
@@ -213,5 +211,21 @@ def game_page(request, room_name):
         'username': request.user.username,  # 현재 로그인한 사용자의 이름
         'jwt_token': token  # JWT 토큰 추가
     }
-
     return render(request, 'game/game.html', context)
+
+
+def offline_page(request):
+    # permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+
+    token = request.GET.get('token')
+    userA_nickname = request.GET.get('userA_nickname')
+    userB_nickname = request.GET.get('userB_nickname')
+    
+    context = {
+        'token': token,
+        'userA_nickname': userA_nickname,
+        'userB_nickname': userB_nickname
+    }
+    return render(request, 'game/local.html', context)

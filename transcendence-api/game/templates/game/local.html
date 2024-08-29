@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Ping Pong Game</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<!-- Django 템플릿에서 전달된 정보 -->
+{{ token|json_script:"token" }}
+{{ userA_nickname|json_script:"userA_nickname" }}
+{{ userB_nickname|json_script:"userB_nickname" }}
+
+<script>
+    // Django 템플릿에서 전달된 정보를 JavaScript로 가져오기
+    const token = JSON.parse(document.getElementById('token').textContent);
+    const userA_nickname = JSON.parse(document.getElementById('userA_nickname').textContent);
+    const userB_nickname = JSON.parse(document.getElementById('userB_nickname').textContent);
+
+    let socket = new WebSocket('ws://' + window.location.host + '/ws/game/offline/' + userA_nickname + '/' + userB_nickname + '/?token=' + token);
+
+    console.log("userA_nickname: ", userA_nickname);
+    console.log("userB_nickname: ", userB_nickname);
+
+    // 서버로부터 받아온 테이블, 패들 정보
+    const tableWidth = 100;
+    const tableLength = 50;
+    const paddleWidth = 10;
+
+    // Three.js 기본 설정
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // 탁구대 생성
+    const tableGeometry = new THREE.PlaneGeometry(tableWidth, tableLength);
+    const tableMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+    const table = new THREE.Mesh(tableGeometry, tableMaterial);
+    table.rotation.x = -Math.PI / 2;  // 테이블이 바닥에 놓이도록 설정
+    table.position.y = 0;  // 테이블의 높이를 약간 조정
+    scene.add(table);
+
+    // 공 생성
+    const ballGeometry = new THREE.SphereGeometry(1, 32, 32);
+    const ballMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
+    const ball = new THREE.Mesh(ballGeometry, ballMaterial);
+    ball.position.set(0, 1, 0);
+    scene.add(ball);
+
+    // 패들 생성
+    const paddleGeometry = new THREE.BoxGeometry(10, 1, paddleWidth);  // 패들의 크기 설정
+    const paddleMaterial = new THREE.MeshPhongMaterial({ color: 0x0000ff });  // 패들 색상: 파란색
+
+    const player1Paddle = new THREE.Mesh(paddleGeometry, paddleMaterial);
+    player1Paddle.position.set(-tableWidth / 2 + 5, 0.5, 0);  // player1 패들의 x 위치를 왼쪽 끝에 고정
+    scene.add(player1Paddle);
+
+    const player2Paddle = new THREE.Mesh(paddleGeometry, paddleMaterial);
+    player2Paddle.position.set(tableWidth / 2 - 5, 0.5, 0);  // player2 패들의 x 위치를 오른쪽 끝에 고정
+    scene.add(player2Paddle);
+
+    // 조명 추가
+    const ambientLight = new THREE.AmbientLight(0x404040);  // 부드러운 환경광 추가
+    scene.add(ambientLight);
+
+    const light = new THREE.DirectionalLight(0xffffff, 1.5);  // 강한 직사광 조명 추가
+    light.position.set(0, 100, 100);  // 조명 위치를 조정하여 테이블 위로 내려오게 설정
+    scene.add(light);
+
+    // 카메라 설정
+    camera.position.set(0, 50, 50);  // 카메라를 테이블 위쪽에 배치
+    camera.lookAt(0, 0, 0);  // 카메라가 테이블 중심을 바라보게 설정
+
+    // 애니메이션 렌더링
+    function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+    }
+
+    animate();
+
+    socket.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        console.log("Received data:", data);
+        if(data.type === 'game_loop'){
+            const ball_position = data.ball_pos;
+            const player1_paddle_z = data.player1_paddle_z;
+            const player2_paddle_z = data.player2_paddle_z;
+
+            // 공의 위치 업데이트
+            ball.position.x = ball_position[0];
+            ball.position.z = ball_position[1];
+
+            // 패들의 위치 업데이트
+            player1Paddle.position.z = player1_paddle_z;
+            player2Paddle.position.z = player2_paddle_z;
+            console.log("player1_paddle_z:", player1_paddle_z, "player2_paddle_z:", player2_paddle_z);
+        }
+    };
+
+    socket.onopen = function() {
+        console.log("WebSocket connection opened");
+    };
+
+    socket.onclose = function(event) {
+        console.log("WebSocket connection closed:", event);
+    };
+
+    socket.onerror = function(event) {
+        console.error("WebSocket error occurred:", event);
+    };
+
+    document.addEventListener('keydown', function(event) {
+        const validKeys = ['w', 's', 'o', 'l'];
+        if (validKeys.includes(event.key)) {
+            socket.send(JSON.stringify({
+                key: event.key
+            }));
+        }
+    });
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ping Pong Game</title>
+    <title>Local Ping Pong Game</title>
     <style>
         body { margin: 0; }
         canvas { display: block; background-color: #2e2e2e; } /* 테이블 색상 추가 */
@@ -74,8 +74,15 @@
         renderer.render(scene, camera);
     }
 
+    animate();
+    
     socket.onmessage = function(event) {
         const data = JSON.parse(event.data);
+        console.log("Received data:", data);
+        if(data.type === 'game_loop'){
+            const ball_position = data.ball_pos;
+            const player1_paddle_z = data.player1_paddle_z;
+            const player2_paddle_z = data.player2_paddle_z;
 
         // 서버로부터 받은 메시지를 콘솔에 출력
         console.log("Received data from server:", data);
@@ -109,7 +116,20 @@
         }
     };
 
+    socket.onopen = function() {
+        console.log("WebSocket connection opened");
+    };
+
+    socket.onclose = function(event) {
+        console.log("WebSocket connection closed:", event);
+    };
+
+    socket.onerror = function(event) {
+        console.error("WebSocket error occurred:", event);
+    };
+
     document.addEventListener('keydown', function(event) {
+
         let direction = null;
 
         if (event.code === 'KeyA') {
@@ -127,8 +147,6 @@
             }));
         }
     });
-
-    init();
 </script>
 </body>
 </html>
