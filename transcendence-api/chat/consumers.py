@@ -118,18 +118,26 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def chat_message(self, event):
         message = event["message"]
         sender = event["sender"]
-
         user = self.scope['user']
 
-        if user.is_authenticated:
+        await self.send(text_data=json.dumps({
+                    "user" : user.nickname,
+                    "sender" : sender,
+                    "message" : message
+                }))
 
-            if (user.nickname == sender) :
-                await self.send(text_data=json.dumps({
-                "message" : f'나 : {message}'
-                }))
-            else :
-                await self.send(text_data=json.dumps({
-                "message" : f'{sender} : {message}'
-                }))
+
+        # if user.is_authenticated:
+
+        #     if (user.nickname == sender) :
+        #         await self.send(text_data=json.dumps({
+        #             "sender" : sender,
+        #             "message" : message
+        #         }))
+        #     else :
+        #         await self.send(text_data=json.dumps({
+        #             "sender" : sender,
+        #             "message" : message
+        #         }))
 
     

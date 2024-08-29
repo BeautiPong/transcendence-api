@@ -17,6 +17,8 @@ class PreMessage(APIView):
 
     def get(self, request, room_name):
 
+        user = request.user
+
         # 기존의 대화 내용 찾아오기
         chatting_room = ChattingRoom.objects.filter(name=room_name).first()
 
@@ -35,7 +37,8 @@ class PreMessage(APIView):
         else:
             message_list = []
 
-        return Response({"messages": message_list},
+        return Response({"messages": message_list,
+                         "user": user.nickname},
                         status=200)
         
 
