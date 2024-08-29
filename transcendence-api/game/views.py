@@ -200,3 +200,18 @@ class MatchingView(APIView):
             return render(request, 'game/match.html', {'jwt_token': token, 'waiting_room': waiting_room, 'room_name': room_name})
         else:
             return redirect('/login_page/')
+
+
+
+def game_page(request, room_name):
+    # JWT 토큰을 request 객체에서 가져오기
+    token = request.GET.get('token')
+
+    # 게임 페이지에 필요한 정보를 컨텍스트로 전달
+    context = {
+        'room_name': room_name,
+        'username': request.user.username,  # 현재 로그인한 사용자의 이름
+        'jwt_token': token  # JWT 토큰 추가
+    }
+
+    return render(request, 'game/game.html', context)
