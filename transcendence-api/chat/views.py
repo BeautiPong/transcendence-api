@@ -10,48 +10,34 @@ from users.models import CustomUser
 from rest_framework_simplejwt.tokens import AccessToken
 from message.models import Message
 
-# 친구 목록이 있는 화면으로 가기 위한 렌더링
-def index(request):
+# 기존 메시지를 가져오기
+class PreMessage(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
 
-    if request.method == 'GET' :
-        token = request.GET.get('token')
-        return render(request, "chat/index.html", {'jwt_token': token})
+    def get(self, request, room_name):
 
+        # 기존의 대화 내용 찾아오기
+        chatting_room = ChattingRoom.objects.filter(name=room_name).first()
 
-# 채팅방 들어가기 위한 렌더링
-def room(request, room_name):
+        # 채팅방의 메시지 가져오기
+        if chatting_room:
+            messages = Message.objects.filter(room=chatting_room).order_by('created_at')
+            # 메시지를 JSON 형식으로 변환
+            message_list = [
+                {
+                    "sender": message.sender.nickname,
+                    "content": message.content,
+                    "created_at": message.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                }
+                for message in messages
+            ]
+        else:
+            message_list = []
 
-    if request.method == 'GET' :
-        token = request.GET.get('token')
-
-    access_token = AccessToken(token)
-    user_id = access_token['user_id']
-    user = CustomUser.objects.get(id=user_id)
-
-    # 기존의 대화 내용 찾아오기
-    chatting_room = ChattingRoom.objects.filter(name=room_name).first()
-
-    # 채팅방의 메시지 가져오기
-    if chatting_room:
-        messages = Message.objects.filter(room=chatting_room).order_by('created_at')
-        # 메시지를 JSON 형식으로 변환
-        message_list = [
-            {
-                "sender": message.sender.nickname,
-                "content": message.content,
-                "created_at": message.created_at.strftime('%Y-%m-%d %H:%M:%S')
-            }
-            for message in messages
-        ]
-    else:
-        message_list = []
-    
-
-    return render(request, "chat/room.html", {"room_name": room_name,
-                                                  "sender": user.nickname,
-                                                  "jwt_token": token,
-                                                  "messages": message_list})
-    
+        return Response({"messages": message_list},
+                        status=200)
+        
 
 # 채팅방 그룹 이름 설정
 class CreateChatRoom(APIView):
@@ -66,9 +52,6 @@ class CreateChatRoom(APIView):
         sorted_names = sorted([user.nickname, friend_nickname])
         room_name = f'chat_{sorted_names[0]}_{sorted_names[1]}'
 
-        # 채팅방 생성
-        # chat_room, created = ChattingRoom.objects.get_or_create(name=room_name)
-
         # 응답 데이터 준비
-        # serializer = ChatRoomSerializer(chat_room)
-        return Response({'room_name': room_name}, status=201)
+        return Response({'room_name': room_name,
+                         "sender": user.nickname}, status=201)
