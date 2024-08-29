@@ -351,26 +351,51 @@ class GameConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             print(f"Error in remove_user_from_room: {e}")
 
-
+from .game import PingPongGame
 class OfflineConsumer(AsyncWebsocketConsumer):
+
+    def count_player(self):
+        self.user1 = self.scope['url_route']['kwargs'].get('user1', None)
+        self.user2 = self.scope['url_route']['kwargs'].get('user2', None)
+        self.user3 = self.scope['url_route']['kwargs'].get('user3', None)
+        self.user4 = self.scope['url_route']['kwargs'].get('user4', None)
+        if(self.user1): self.player_count += 1
+        if(self.user2): self.player_count += 1
+        if(self.user3): self.player_count += 1
+        if(self.user4): self.player_count += 1
+        print("player count = ", self.player_count)
 
     async def connect(self):
         self.user = self.scope['user']
-        self.userA_nickname = self.scope['url_route']['kwargs'].get('userA_nickname', None)
-        self.userB_nickname = self.scope['url_route']['kwargs'].get('userB_nickname', None)
-
+        self.player_count = 0
+        self.winner = ''
+        self.count_player()
         print("local connect")
         print("user =", self.user)
         print("URL Route Kwargs:", self.scope['url_route']['kwargs'])
-        print("self.userA_nickname: ", self.userA_nickname)
-        print("self.userB_nickname: ", self.userB_nickname)
         self.keep_running = True
         await self.accept()
         await self.send(text_data=json.dumps({
             'type': 'game_start'
         }))
-        asyncio.create_task(self.game_loop())
+        print(self.winner)
+        asyncio.create_task(self.game_execute())
         
+        
+    async def game_execute(self):
+        task1 = asyncio.create_task(self.game_loop(self.user1, self.user2))
+        await task1
+        if(self.player_count == 4):
+            winner1 = self.winner
+            print(self.winner)
+            task2 = asyncio.create_task(self.game_loop(self.user3, self.user4))
+            await task2
+            winner2 = self.winner
+            print(self.winner)
+            print("winner1 = ", winner1, "winner2 = ", winner2)
+            task3 = asyncio.create_task(self.game_loop(winner1, winner2))
+            await task3
+
 
     async def disconnect(self, close_code):
         self.keep_running = False
@@ -394,25 +419,39 @@ class OfflineConsumer(AsyncWebsocketConsumer):
             self.game.move_paddle(key)
 
             # 게임 상태를 업데이트하고 클라이언트에 다시 보내는 예시
-            # self.game.move_ball()  # 공도 이동
+            self.game.move_ball()  # 공도 이동
             game_state = self.game.get_game_state()
 
             # 모든 클라이언트에게 게임 상태를 전송 (broadcast)
-            self.send(text_data=json.dumps(game_state))
+            await self.send(text_data=json.dumps(game_state))
         
 
-    async def game_loop(self):
-        self.game = PingPongGame(100,50,10, self.userA_nickname, self.userB_nickname)
+    async def game_loop(self,user1, user2):
+        self.game = PingPongGame(100,50,10, user1, user2)
         print("game created")
+        print("user1 = ", user1, "user2 = ", user2)
         while (self.keep_running):
             await asyncio.sleep(0.1)
             self.game.move_ball()
             state = self.game.get_game_state()
             
             await self.send(text_data=json.dumps({
-            'type': 'game_loop',
-            'state': state,
-            'ball_pos' : self.game.ball_pos,
-            'player1_paddle_z' : self.game.player1_paddle_z,
-            'player2_paddle_z' : self.game.player2_paddle_z,
+                'type': 'game_loop',
+                'state': state,
+                'ball_pos' : self.game.ball_pos,
+                'player1_paddle_z' : self.game.player1_paddle_z,
+                'player2_paddle_z' : self.game.player2_paddle_z,
+            }))
+            if(self.game.player1_score == 5):
+                self.winner = user1 
+                break
+            elif (self.game.player2_score == 5):
+                self.winner = user2 
+                break
+        
+        await self.send(text_data=json.dumps({
+            'type': 'game_end',
+            'winner': self.winner
         }))
+        self.game.player1_score = 0
+        self.game.player2_score = 0
