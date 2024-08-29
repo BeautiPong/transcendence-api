@@ -347,7 +347,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             print(f"Error in remove_user_from_room: {e}")
 
-
+from .game import PingPongGame
 class OfflineConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
@@ -390,7 +390,7 @@ class OfflineConsumer(AsyncWebsocketConsumer):
             self.game.move_paddle(key)
 
             # 게임 상태를 업데이트하고 클라이언트에 다시 보내는 예시
-            # self.game.move_ball()  # 공도 이동
+            self.game.move_ball()  # 공도 이동
             game_state = self.game.get_game_state()
 
             # 모든 클라이언트에게 게임 상태를 전송 (broadcast)
