@@ -6,80 +6,69 @@
     <title>Local Ping Pong Game</title>
     <style>
         body { margin: 0; }
-        canvas { display: block; }
+        canvas { display: block; background-color: #2e2e2e; } /* 테이블 색상 추가 */
     </style>
 </head>
 <body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
-<!-- Django 템플릿에서 전달된 정보 -->
-{{ token|json_script:"token" }}
-{{ userA_nickname|json_script:"userA_nickname" }}
-{{ userB_nickname|json_script:"userB_nickname" }}
+{{ room_name|json_script:"room_name" }}
+{{ jwt_token|json_script:"jwt_token" }} <!-- JWT 토큰 추가 -->
 
 <script>
-    // Django 템플릿에서 전달된 정보를 JavaScript로 가져오기
-    const token = JSON.parse(document.getElementById('token').textContent);
-    const userA_nickname = JSON.parse(document.getElementById('userA_nickname').textContent);
-    const userB_nickname = JSON.parse(document.getElementById('userB_nickname').textContent);
+    const roomName = JSON.parse(document.getElementById('room_name').textContent);
+    const jwtToken = JSON.parse(document.getElementById('jwt_token').textContent);  // JWT 토큰 읽기
 
-    let socket = new WebSocket('ws://' + window.location.host + '/ws/game/offline/' + userA_nickname + '/' + userB_nickname + '/?token=' + token);
+    let scene, camera, renderer;
+    let paddle, opponentPaddle, ball, table;
+    let playerRole = null;
 
-    console.log("userA_nickname: ", userA_nickname);
-    console.log("userB_nickname: ", userB_nickname);
-    
-    // 서버로부터 받아온 테이블, 패들 정보
-    const tableWidth = 100;
-    const tableLength = 50;
-    const paddleWidth = 10;
+    // WebSocket 연결 URL에 JWT 토큰을 추가
+    let socket = new WebSocket("ws://" + window.location.host + "/ws/game/" + roomName + "/?token=" + jwtToken);
 
-    // Three.js 기본 설정
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
+    function init() {
+        scene = new THREE.Scene();
 
-    // 탁구대 생성
-    const tableGeometry = new THREE.PlaneGeometry(tableWidth, tableLength);
-    const tableMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
-    const table = new THREE.Mesh(tableGeometry, tableMaterial);
-    table.rotation.x = -Math.PI / 2;
-    table.position.y = 0;
-    scene.add(table);
+        // 카메라를 약간 기울여서 3D 효과를 더 부각
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 3, -5);  // 카메라 위치 조정 (y축과 z축을 높여서 기울임)
+        camera.lookAt(0, 0, 0);  // 카메라가 0,0,0을 바라보게 설정
 
-    // 공 생성
-    const ballGeometry = new THREE.SphereGeometry(1, 32, 32);
-    const ballMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
-    const ball = new THREE.Mesh(ballGeometry, ballMaterial);
-    ball.position.set(0, 1, 0);
-    scene.add(ball);
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
 
-    // 패들 생성
-    const paddleGeometry = new THREE.BoxGeometry(10, 10, paddleWidth);  // 패들의 크기 설정
-    const paddleMaterial = new THREE.MeshPhongMaterial({ color: 0x0000ff });  // 패들 색상: 파란색
+        // 테이블 생성
+        let tableGeometry = new THREE.BoxGeometry(2, 0.1, 4);
+        let tableMaterial = new THREE.MeshBasicMaterial({color: 0x006400});
+        table = new THREE.Mesh(tableGeometry, tableMaterial);
+        table.position.y = -0.05;
+        scene.add(table);
 
-    const player1Paddle = new THREE.Mesh(paddleGeometry, paddleMaterial);
-    player1Paddle.position.set(-tableWidth / 2 + 5, 5, 0);  // player1 패들의 x 위치를 왼쪽 끝에 고정
-    scene.add(player1Paddle);
+        // 플레이어 패들 생성
+        let paddleGeometry = new THREE.BoxGeometry(0.5, 0.1, 0.1);
+        let paddleMaterial = new THREE.MeshBasicMaterial({color: 0x00ff00});
+        paddle = new THREE.Mesh(paddleGeometry, paddleMaterial);
+        paddle.position.z = -1.8;  // 패들을 테이블의 양 끝에 배치
+        paddle.position.y = 0.05;
+        scene.add(paddle);
 
-    const player2Paddle = new THREE.Mesh(paddleGeometry, paddleMaterial);
-    player2Paddle.position.set(tableWidth / 2 - 5, 5, 0);  // player2 패들의 x 위치를 오른쪽 끝에 고정
-    scene.add(player2Paddle);
+        // 상대방 패들 생성
+        opponentPaddle = new THREE.Mesh(paddleGeometry, paddleMaterial);
+        opponentPaddle.position.z = 1.8;  // 상대 패들 위치 설정
+        opponentPaddle.position.y = 0.05;
+        scene.add(opponentPaddle);
 
-    // 조명 추가
-    const ambientLight = new THREE.AmbientLight(0x404040);  // 부드러운 환경광 추가
-    scene.add(ambientLight);
+        // 공 생성
+        let ballGeometry = new THREE.SphereGeometry(0.1, 32, 32);
+        let ballMaterial = new THREE.MeshBasicMaterial({color: 0xff0000});
+        ball = new THREE.Mesh(ballGeometry, ballMaterial);
+        ball.position.y = 0.1;
+        scene.add(ball);
 
-    const light = new THREE.DirectionalLight(0xffffff, 1.5);  // 기존 조명의 강도를 증가시킴
-    light.position.set(0, 100, 100);
-    scene.add(light);
+        animate();
+    }
 
-    // 카메라 설정
-    camera.position.set(0, 200, 250);  // 카메라를 더 멀리 위로 올려 탁구대와 패들이 잘 보이도록 조정
-    camera.lookAt(0, 0, 0);  // 카메라가 중앙을 바라보도록 설정
-
-    // 애니메이션 렌더링
     function animate() {
         requestAnimationFrame(animate);
         renderer.render(scene, camera);
@@ -95,15 +84,35 @@
             const player1_paddle_z = data.player1_paddle_z;
             const player2_paddle_z = data.player2_paddle_z;
 
-            // 공의 위치 업데이트 (x, z축)
-            ball.position.x = ball_position[0];
-            ball.position.z = ball_position[1];
+        // 서버로부터 받은 메시지를 콘솔에 출력
+        console.log("Received data from server:", data);
 
-            // 패들의 위치 업데이트 (z축)
-            player1Paddle.position.z = player1_paddle_z;
-            player2Paddle.position.z = player2_paddle_z;
+        if (data.type === 'assign_role') {
+            playerRole = data.role;
+            console.log("Assigned role:", playerRole);
+        }
 
-            console.log("ball_position: ", ball_position);
+        if (data.type === 'game_state') {
+            // 공의 z 좌표를 반전시킴
+            let ballZPosition = data.ball_position.z;
+            if (playerRole === 'player2') {
+                ballZPosition = -ballZPosition;
+            }
+            ball.position.set(data.ball_position.x, 0.1, ballZPosition);
+
+            // 패들의 위치 설정
+            if (playerRole === 'player1') {
+                paddle.position.set(data.paddle_positions.player1, 0.05, -1.8);
+                opponentPaddle.position.set(data.paddle_positions.player2, 0.05, 1.8);
+            } else if (playerRole === 'player2') {
+                paddle.position.set(data.paddle_positions.player2, 0.05, -1.8);
+                opponentPaddle.position.set(data.paddle_positions.player1, 0.05, 1.8);
+            }
+        }
+
+        if (data.type === 'game_over') {
+            // 게임 종료 시 승자, 점수 및 플레이어 닉네임을 표시
+            alert(`Game Over! Winner: ${data.winner}\n\nScores\n${data.player1}: ${data.scores.player1}\n${data.player2}: ${data.scores.player2}`);
         }
     };
 
@@ -120,10 +129,21 @@
     };
 
     document.addEventListener('keydown', function(event) {
-        const validKeys = ['w', 's', 'o', 'l'];
-        if (validKeys.includes(event.key)) {
+
+        let direction = null;
+
+        if (event.code === 'KeyA') {
+            direction = 'left';
+        } else if (event.code === 'KeyD') {
+            direction = 'right';
+        }
+
+        if (direction && playerRole) {
+            console.log(`Key pressed: ${direction}`);
             socket.send(JSON.stringify({
-                key: event.key
+                type: 'move',
+                direction: direction,
+                player: playerRole
             }));
         }
     });

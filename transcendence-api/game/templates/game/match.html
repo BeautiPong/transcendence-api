@@ -36,14 +36,13 @@
         if (data.type === 'game_start') {
             // room_name이 undefined가 아닌지 확인
             if (data.room_name) {
-                // 게임 페이지로 리다이렉트
-                window.location.href = '/api/game/' + data.room_name + '/';  // 게임 페이지 URL로 리다이렉트
+                // 게임 페이지로 리다이렉트하면서 토큰도 붙임
+                window.location.href = '/api/game/' + data.room_name + '/?token=' + jwtToken;  // 게임 페이지 URL로 리다이렉트
             } else {
                 console.error('room_name is undefined');
             }
         }
     };
-
 
     chatSocket.onclose = function(e) {
         console.error('Chat socket closed unexpectedly');
