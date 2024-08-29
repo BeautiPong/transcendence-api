@@ -14,19 +14,28 @@
 
 <!-- Django 템플릿에서 전달된 정보 -->
 {{ token|json_script:"token" }}
-{{ userA_nickname|json_script:"userA_nickname" }}
-{{ userB_nickname|json_script:"userB_nickname" }}
+{{ user1|json_script:"user1" }}
+{{ user2|json_script:"user2" }}
+{{ user3|json_script:"user3" }}
+{{ user4|json_script:"user4" }}
 
 <script>
     // Django 템플릿에서 전달된 정보를 JavaScript로 가져오기
     const token = JSON.parse(document.getElementById('token').textContent);
-    const userA_nickname = JSON.parse(document.getElementById('userA_nickname').textContent);
-    const userB_nickname = JSON.parse(document.getElementById('userB_nickname').textContent);
+    const user1 = JSON.parse(document.getElementById('user1').textContent);
+    const user2 = JSON.parse(document.getElementById('user2').textContent);
+    const user3 = JSON.parse(document.getElementById('user3').textContent);
+    const user4 = JSON.parse(document.getElementById('user4').textContent);
+    const matchType = "{{ match_type }}";
 
-    let socket = new WebSocket('ws://' + window.location.host + '/ws/game/offline/' + userA_nickname + '/' + userB_nickname + '/?token=' + token);
+    let socketUrl;
+    if (matchType === '1v1') {
+        socketUrl = 'ws://' + window.location.host + '/ws/game/offline/' + user1 + '/' + user2 + '/?token=' + token;
+    } else if (matchType === 'tournament') {
+        socketUrl = 'ws://' + window.location.host + '/ws/game/offline/' + user1 + '/' + user2 + '/' + user3 + '/' + user4 + '/?token=' + token;
+    }
 
-    console.log("userA_nickname: ", userA_nickname);
-    console.log("userB_nickname: ", userB_nickname);
+    let socket = new WebSocket(socketUrl);
 
     // 서버로부터 받아온 테이블, 패들 정보
     const tableWidth = 100;
@@ -102,7 +111,10 @@
             // 패들의 위치 업데이트
             player1Paddle.position.z = player1_paddle_z;
             player2Paddle.position.z = player2_paddle_z;
-            console.log("player1_paddle_z:", player1_paddle_z, "player2_paddle_z:", player2_paddle_z);
+        }
+
+        else if(data.type === 'game_end'){
+            alert('Game Over - ' + data.winner + ' wins!');
         }
     };
 

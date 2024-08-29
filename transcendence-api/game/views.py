@@ -215,17 +215,23 @@ def game_page(request, room_name):
 
 
 def offline_page(request):
-    # permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
-
-
     token = request.GET.get('token')
-    userA_nickname = request.GET.get('userA_nickname')
-    userB_nickname = request.GET.get('userB_nickname')
-    
+    user1 = request.GET.get('user1')
+    user2 = request.GET.get('user2')
+    user3 = request.GET.get('user3')
+    user4 = request.GET.get('user4')
+
+    if user3 is None and user4 is None:
+        match_type = '1v1'
+    else:
+        match_type = 'tournament'
+
     context = {
         'token': token,
-        'userA_nickname': userA_nickname,
-        'userB_nickname': userB_nickname
+        'user1': user1,
+        'user2': user2,
+        'user3': user3,
+        'user4': user4,
+        'match_type': match_type,
     }
     return render(request, 'game/local.html', context)
