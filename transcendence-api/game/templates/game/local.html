@@ -98,7 +98,7 @@
 
     socket.onmessage = function(event) {
         const data = JSON.parse(event.data);
-        console.log("Received data:", data);
+        // console.log("Received data:", data);
         if(data.type === 'game_loop'){
             const ball_position = data.ball_pos;
             const player1_paddle_z = data.player1_paddle_z;
@@ -130,14 +130,41 @@
         console.error("WebSocket error occurred:", event);
     };
 
-    document.addEventListener('keydown', function(event) {
-        const validKeys = ['w', 's', 'o', 'l'];
+
+    const keysPressed = {};
+    const validKeys = ['w', 's', 'o', 'l'];
+
+    document.addEventListener('keydown', (event) => {
+        // 유효한 키인지 확인
         if (validKeys.includes(event.key)) {
-            socket.send(JSON.stringify({
-                key: event.key
-            }));
+            // 키가 눌렸다는 상태를 기록합니다.
+            keysPressed[event.key] = true;
+
+            // 현재 눌린 키들을 확인하고, 동작을 수행합니다.
+            handleKeyPresses();
         }
     });
+
+    document.addEventListener('keyup', (event) => {
+        // 유효한 키인지 확인
+        if (validKeys.includes(event.key)) {
+            // 키가 떼어진 상태를 기록합니다.
+            delete keysPressed[event.key];
+        }
+    });
+
+    function handleKeyPresses() {
+        // 현재 눌려 있는 키들을 순회하며 동작을 수행합니다.
+        for (let key in keysPressed) {
+            if (keysPressed[key]) {
+                console.log(key);
+                socket.send(JSON.stringify({
+                    key: key
+                }));
+            }
+        }
+    }
 </script>
 </body>
 </html>
+<!-- http://localhost:8000/api/game/offline/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzI0OTk3MDExLCJpYXQiOjE3MjQ5OTUyMTEsImp0aSI6ImQwMTU5N2YwM2M5ZjQ3YmE5MTgwYTI3NmYyYzU3NWYzIiwidXNlcl9pZCI6NH0.Bp8MJYz8r4KyGHVdIDrYowrDuTQ9Ez0UoPeW97ajKtE&user1=inlim&user2=cake&user3=zoo&user4=app -->

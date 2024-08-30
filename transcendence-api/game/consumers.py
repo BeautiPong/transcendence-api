@@ -396,7 +396,7 @@ class OfflineConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         self.keep_running = False
         print("Gameconsumer WebSocket disconnected")
-        await self.channel_layer.group_discard(self.room_name, self.channel_name)
+        # await self.channel_layer.group_discard(self.room_name, self.channel_name)
 
     async def receive(self, text_data):
         try:
