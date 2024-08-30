@@ -4,9 +4,6 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 
-from game.game import PingPongGame
-
-
 class MatchingConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         user = self.scope['user']
@@ -27,7 +24,7 @@ class MatchingConsumer(AsyncWebsocketConsumer):
             else:
                 await self.add_user_to_room(self.room_name, user.nickname)
                 players_in_room = await self.check_room_capacity(self.room_name)
-                if players_in_room >= 2:
+                if players_in_room > 2:
                     await self.close()
                     return
 
@@ -72,7 +69,7 @@ class MatchingConsumer(AsyncWebsocketConsumer):
             user1_nickname = users[0].decode('utf-8')
             user2_nickname = users[1].decode('utf-8')
 
-            self.room_name = f'game_{user1_nickname}_{user2_nickname}'
+            self.room_name = f'{user1_nickname}_{user2_nickname}'
             await self.create_game_room(user1_nickname, user2_nickname)
 
             await self.redis_client.lrem(self.matchmaking_queue_key, 0, user1_nickname)
@@ -121,7 +118,7 @@ class MatchingConsumer(AsyncWebsocketConsumer):
                 self.room_name,
                 {
                     'type': 'game_start',
-                    'room_name': self.room_name,
+                    'room_name': 'game_' + self.room_name,
                     "message": "Game started"
                 }
             )
@@ -246,7 +243,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                     self.ball_velocity['z'] = -self.ball_velocity['z']
                 else:
                     self.scores['player2'] += 1
-                    if self.scores['player2'] >= 10:
+                    if self.scores['player2'] >= 5:
                         await self.end_game(winner=self.players['player2'])
                     else:
                         await self.reset_ball()
@@ -258,7 +255,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                     self.ball_velocity['z'] = -self.ball_velocity['z']
                 else:
                     self.scores['player1'] += 1
-                    if self.scores['player1'] >= 10:
+                    if self.scores['player1'] >= 5:
                         await self.end_game(winner=self.players['player1'])
                     else:
                         await self.reset_ball()
@@ -455,3 +452,5 @@ class OfflineConsumer(AsyncWebsocketConsumer):
         }))
         self.game.player1_score = 0
         self.game.player2_score = 0
+
+

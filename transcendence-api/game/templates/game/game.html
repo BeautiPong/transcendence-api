@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Local Ping Pong Game</title>
+    <title>Online Ping Pong Game</title>
     <style>
         body { margin: 0; }
         canvas { display: block; background-color: #2e2e2e; } /* 테이블 색상 추가 */
@@ -24,7 +24,7 @@
     let playerRole = null;
 
     // WebSocket 연결 URL에 JWT 토큰을 추가
-    let socket = new WebSocket("ws://" + window.location.host + "/ws/game/" + roomName + "/?token=" + jwtToken);
+    let socket = new WebSocket("ws://" + window.location.host + "/ws/game/online/" + roomName + "/?token=" + jwtToken);
 
     function init() {
         scene = new THREE.Scene();
@@ -65,28 +65,29 @@
         ball = new THREE.Mesh(ballGeometry, ballMaterial);
         ball.position.y = 0.1;
         scene.add(ball);
-
-        animate();
     }
 
     function animate() {
         requestAnimationFrame(animate);
-        renderer.render(scene, camera);
+        if (renderer && scene && camera) { // renderer가 정의된 경우에만 render 함수 호출
+            renderer.render(scene, camera);
+        }
     }
 
-    animate();
-    
+    init();  // 먼저 init() 함수를 호출하여 scene, camera, renderer 초기화
+    animate();  // init이 완료된 후 animate() 호출
+
     socket.onmessage = function(event) {
         const data = JSON.parse(event.data);
         console.log("Received data:", data);
-        if(data.type === 'game_loop'){
+
+        if(data.type === 'game_loop') {
             const ball_position = data.ball_pos;
             const player1_paddle_z = data.player1_paddle_z;
             const player2_paddle_z = data.player2_paddle_z;
+            // 서버로부터 받은 메시지를 콘솔에 출력
+            console.log("Received data from server:", data);
         }
-        // 서버로부터 받은 메시지를 콘솔에 출력
-        console.log("Received data from server:", data);
-
         if (data.type === 'assign_role') {
             playerRole = data.role;
             console.log("Assigned role:", playerRole);
