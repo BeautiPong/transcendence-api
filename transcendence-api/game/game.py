@@ -10,7 +10,8 @@ class PingPongGame:
         self.player2_paddle_x = self.table_width // 2 - self.paddle_width  # player2의 x축 위치 (탁구대의 오른쪽 끝 부분)
         
         # 공의 초기 위치와 방향
-        self.ball_pos = [self.table_width // 2, self.table_length // 2]  # 공의 x, z 좌표
+        # self.ball_pos = [self.table_width // 2, self.table_length // 2]  # 공의 x, z 좌표
+        self.ball_pos = [0, 0]
         self.ball_dir = [1, 1]  # x축과 z축으로 공이 이동하는 방향
         
         # 패들의 초기 위치 (z축만 사용)
@@ -82,6 +83,8 @@ class PingPongGame:
         # 게임 상태 반환 (패들 위치, 공 위치, 점수)
         return {
             'ball_pos': self.ball_pos,
+            'player1' : self.player1,
+            'player2' : self.player2,
             'player1_paddle_z': self.player1_paddle_z,
             'player2_paddle_z': self.player2_paddle_z,
             'player1_score': self.player1_score,

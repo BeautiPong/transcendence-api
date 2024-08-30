@@ -425,7 +425,7 @@ class OfflineConsumer(AsyncWebsocketConsumer):
     async def game_loop(self,user1, user2):
         self.game = PingPongGame(100,50,10, user1, user2)
         print("game created")
-        print("user1 = ", user1, "user2 = ", user2)
+        print("user1 =", user1, "user2 =", user2)
         while (self.keep_running):
             await asyncio.sleep(0.1)
             self.game.move_ball()
@@ -434,9 +434,6 @@ class OfflineConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps({
                 'type': 'game_loop',
                 'state': state,
-                'ball_pos' : self.game.ball_pos,
-                'player1_paddle_z' : self.game.player1_paddle_z,
-                'player2_paddle_z' : self.game.player2_paddle_z,
             }))
             if(self.game.player1_score == 5):
                 self.winner = user1 

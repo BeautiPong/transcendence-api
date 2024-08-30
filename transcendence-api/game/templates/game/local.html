@@ -10,6 +10,10 @@
     </style>
 </head>
 <body>
+    <div id="scoreboard" style="position: absolute; top: 10px; width: 100%; display: flex; justify-content: space-around; color: white; font-size: 24px; padding: 0 20px;">
+        <div id="player1_score"></div>
+        <div id="player2_score"></div>
+    </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <!-- Django 템플릿에서 전달된 정보 -->
@@ -98,11 +102,12 @@
 
     socket.onmessage = function(event) {
         const data = JSON.parse(event.data);
-        // console.log("Received data:", data);
+        // console.log("Received data:", data); 
         if(data.type === 'game_loop'){
-            const ball_position = data.ball_pos;
-            const player1_paddle_z = data.player1_paddle_z;
-            const player2_paddle_z = data.player2_paddle_z;
+            console.log(data.state.player1_score, data.state.player2_score); // 1 : 0으로 시작.
+            const ball_position = data.state.ball_pos;
+            const player1_paddle_z = data.state.player1_paddle_z;
+            const player2_paddle_z = data.state.player2_paddle_z;
 
             // 공의 위치 업데이트
             ball.position.x = ball_position[0];
@@ -111,6 +116,12 @@
             // 패들의 위치 업데이트
             player1Paddle.position.z = player1_paddle_z;
             player2Paddle.position.z = player2_paddle_z;
+
+            // 점수 업데이트
+            // document.getElementById('player1_score').textContent = `Player 1: ${data.state.player1_score}`;
+            document.getElementById('player1_score').textContent = `${data.state.player1}: ${data.state.player1_score}`;
+            // document.getElementById('player2_score').textContent = `Player 2: ${data.state.player2_score}`;
+            document.getElementById('player2_score').textContent = `${data.state.player2}: ${data.state.player2_score}`;
         }
 
         else if(data.type === 'game_end'){
@@ -157,7 +168,6 @@
         // 현재 눌려 있는 키들을 순회하며 동작을 수행합니다.
         for (let key in keysPressed) {
             if (keysPressed[key]) {
-                console.log(key);
                 socket.send(JSON.stringify({
                     key: key
                 }));
@@ -167,4 +177,4 @@
 </script>
 </body>
 </html>
-<!-- http://localhost:8000/api/game/offline/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzI0OTk3MDExLCJpYXQiOjE3MjQ5OTUyMTEsImp0aSI6ImQwMTU5N2YwM2M5ZjQ3YmE5MTgwYTI3NmYyYzU3NWYzIiwidXNlcl9pZCI6NH0.Bp8MJYz8r4KyGHVdIDrYowrDuTQ9Ez0UoPeW97ajKtE&user1=inlim&user2=cake&user3=zoo&user4=app -->
+<!-- http://localhost:8000/api/game/offline/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzI1MDAyMjYxLCJpYXQiOjE3MjUwMDA0NjEsImp0aSI6IjQzMTQ1NTIwMjAyNDRmMTJiNmU4ZTFiMjE0NGM0MmM5IiwidXNlcl9pZCI6NH0.Rg4HMuUrcSDFv7vhtVSkdjCfr28GfiMlUq_3QtluWEA&user1=inlim&user2=cake&user3=zoo&user4=app -->
