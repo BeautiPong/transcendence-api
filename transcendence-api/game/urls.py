@@ -1,5 +1,4 @@
 from django.urls import path
-
 from .views import SaveGameView, RecentGamesView, InviteGameView, AcceptGameView, MatchingView, game_page, offline_page
 
 urlpatterns = [

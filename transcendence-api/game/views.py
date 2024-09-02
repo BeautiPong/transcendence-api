@@ -1,15 +1,12 @@
-import aioredis
 from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 from django.shortcuts import render, redirect
-from django.views.decorators.csrf import csrf_exempt
+from channels.layers import get_channel_layer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.exceptions import NotFound, ValidationError
-
 from scoreHistory.models import ScoreHistory
 from users.models import CustomUser
 from users.serializers import UserScoreSerializer
@@ -235,3 +232,4 @@ def offline_page(request):
         'match_type': match_type,
     }
     return render(request, 'game/local.html', context)
+

@@ -18,8 +18,6 @@ urlpatterns = [
     path('token/reissue', TokenRefreshView.as_view()),
     path('login/success', login_success, name='login_success'),
 
-    #웹소켓
-    # path("", index, name="index"),
     path('test/', login_and_redirect),
     # path("<str:nickname>/", WebSocketLoginView.as_view(), name="login"),
 ]
