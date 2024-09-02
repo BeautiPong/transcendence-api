@@ -11,6 +11,9 @@ class MatchingConsumer(AsyncWebsocketConsumer):
         self.waiting_room = self.scope['url_route']['kwargs'].get('waiting_room', None)
 
         if user.is_authenticated:
+            if user.is_in_game:
+                self.close()
+                return
             self.redis_client = await aioredis.from_url("redis://redis")
             await self.set_user_game_status(user, True)
             await self.channel_layer.group_add(f'user_game_{user.nickname}', self.channel_name)
@@ -43,6 +46,8 @@ class MatchingConsumer(AsyncWebsocketConsumer):
         if self.room_name:
             await self.channel_layer.group_discard(self.room_name, self.channel_name)
             await self.remove_user_from_room(self.room_name, user.nickname)
+        else:
+            await self.redis_client.lrem(self.matchmaking_queue_key, 0, user.nickname)
         await self.channel_layer.group_discard(f'user_game_{user.nickname}', self.channel_name)
 
     @database_sync_to_async
