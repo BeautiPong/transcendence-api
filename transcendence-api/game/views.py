@@ -1,4 +1,5 @@
 from asgiref.sync import async_to_sync
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from channels.layers import get_channel_layer
 from rest_framework.permissions import IsAuthenticated
@@ -170,13 +171,12 @@ class AcceptGameView(APIView):
         return Response({"message": "Join Game"}, status=status.HTTP_201_CREATED)
 
 class MatchingView(APIView):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
-    def get(self, request):
-        token = request.GET.get('token')
-        waiting_room = request.GET.get('waiting_room')
-        room_name = request.GET.get('room_name')
+    def post(self, request):
+        waiting_room = request.data.get('waiting_room')
+        room_name = request.data.get('room_name')
         user = request.user
 
         if room_name:
@@ -184,31 +184,42 @@ class MatchingView(APIView):
             async_to_sync(channel_layer.group_send)(
                 waiting_room,
                 {
-                    # 프론트에서 이거 보고 매칭 웹소켓 연결 시작해야 됨(룸 네임 주면서,,)
                     'type': 'start_game_with_friend',
                     'waiting_room': waiting_room,
                     'room_name': room_name,
                     'message': 'start game with friend'
                 }
             )
-            # return Response({"message": "Start Game with friend"}, status=status.HTTP_200_OK)
 
-        if token:
-            return render(request, 'game/match.html', {'jwt_token': token, 'waiting_room': waiting_room, 'room_name': room_name})
+        if user.is_authenticated:
+            token = str(request.auth)
+            data = {
+                'jwt_token': token,
+                'waiting_room': waiting_room,
+                'room_name': room_name
+            }
+            return JsonResponse(data, status=status.HTTP_200_OK)
         else:
-            return redirect('/login_page/')
+            return JsonResponse({'error': 'User not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
 
-def game_page(request, room_name):
-    # JWT 토큰을 request 객체에서 가져오기
-    token = request.GET.get('token')
 
-    # 게임 페이지에 필요한 정보를 컨텍스트로 전달
-    context = {
-        'room_name': room_name,
-        'username': request.user.username,  # 현재 로그인한 사용자의 이름
-        'jwt_token': token  # JWT 토큰 추가
-    }
-    return render(request, 'game/game.html', context)
+class GamePageView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def get(self, request, room_name):
+        user = request.user
+
+        if not user.is_authenticated:
+            return JsonResponse({'error': 'User not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 게임 페이지에 필요한 정보를 JSON으로 전달
+        data = {
+            'room_name': room_name,
+            'jwt_token': str(request.auth)
+        }
+
+        return JsonResponse(data, status=status.HTTP_200_OK)
 
 
 def offline_page(request):
