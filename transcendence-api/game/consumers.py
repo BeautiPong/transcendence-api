@@ -1,8 +1,14 @@
 import asyncio
+import random
 import aioredis
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
+
+from scoreHistory.models import ScoreHistory
+from users.models import CustomUser
+from .models import Game
+
 
 class MatchingConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -138,9 +144,9 @@ class MatchingConsumer(AsyncWebsocketConsumer):
                 'type': 'game_start',
                 'room_name': event['room_name'],
                 'message': event['message']
-        }))
+            }))
 
-            
+
 class GameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.user = self.scope['user']
@@ -273,8 +279,10 @@ class GameConsumer(AsyncWebsocketConsumer):
         if not self.game_active:
             return  # 게임이 종료된 경우 공 위치 초기화 중지
 
+        z_velocity = random.choice([-0.02, 0.02])
+
         self.ball_position = {'x': 0, 'y': 0, 'z': 0}
-        self.ball_velocity = {'x': 0.01, 'y': 0, 'z': -0.02}
+        self.ball_velocity = {'x': 0.01, 'y': 0, 'z': z_velocity}
         await self.send_game_state()
 
     async def send_game_state(self):
@@ -324,6 +332,64 @@ class GameConsumer(AsyncWebsocketConsumer):
                 'player2': self.players['player2']   # player2의 닉네임
             }
         )
+
+        await self.save_game_results(winner)
+
+
+    @database_sync_to_async
+    def save_game_results(self, winner):
+        try:
+            # 게임에 참여한 사용자 객체 가져오기
+            user1 = CustomUser.objects.get(nickname=self.players['player1'])
+            user2 = CustomUser.objects.get(nickname=self.players['player2'])
+
+            # 게임 결과 저장
+            game1 = Game(
+                user1=user1,
+                user2=user2,
+                user1_score=self.scores['player1'],
+                user2_score=self.scores['player2']
+            )
+            game1.save()
+
+            game2 = Game(
+                user1=user2,
+                user2=user1,
+                user1_score=self.scores['player2'],
+                user2_score=self.scores['player1']
+            )
+            game2.save()
+
+            # 승리한 플레이어 및 점수 계산
+            if winner == user1.nickname:
+                user1.win_cnt += 1
+                user1.score += 20
+                user2.score -= 20
+            else:
+                user2.win_cnt += 1
+                user2.score += 20
+                user1.score -= 20
+
+            user1.match_cnt += 1
+            user2.match_cnt += 1
+
+            # 사용자 데이터베이스 업데이트
+            user1.save()
+            user2.save()
+
+            # ScoreHistory 생성 및 저장
+            score_history1 = ScoreHistory(user=user1, score=user1.score)
+            score_history1.save()
+
+            score_history2 = ScoreHistory(user=user2, score=user2.score)
+            score_history2.save()
+
+            print("Game results saved successfully")
+        except CustomUser.DoesNotExist:
+            print("User not found.")
+        except Exception as e:
+            print(f"Error saving game results: {e}")
+
 
     async def game_over(self, event):
         winner = event['winner']
@@ -382,8 +448,8 @@ class OfflineConsumer(AsyncWebsocketConsumer):
         }))
         print(self.winner)
         asyncio.create_task(self.game_execute())
-        
-        
+
+
     async def game_execute(self):
         task1 = asyncio.create_task(self.game_loop(self.user1, self.user2))
         await task1
@@ -414,7 +480,7 @@ class OfflineConsumer(AsyncWebsocketConsumer):
 
         if 'key' in data:
             # 패들을 움직이는 플레이어와 방향을 가져옴
-            
+
             key = data['key']  # 예: 'left' 또는 'right'
 
             # 이 정보를 바탕으로 게임 로직에서 패들 이동 처리
@@ -426,7 +492,7 @@ class OfflineConsumer(AsyncWebsocketConsumer):
 
             # 모든 클라이언트에게 게임 상태를 전송 (broadcast)
             await self.send(text_data=json.dumps(game_state))
-        
+
 
     async def game_loop(self,user1, user2):
         self.game = PingPongGame(100,50,10, user1, user2)
@@ -436,18 +502,18 @@ class OfflineConsumer(AsyncWebsocketConsumer):
             await asyncio.sleep(0.1)
             self.game.move_ball()
             state = self.game.get_game_state()
-            
+
             await self.send(text_data=json.dumps({
                 'type': 'game_loop',
                 'state': state,
             }))
             if(self.game.player1_score == 5):
-                self.winner = user1 
+                self.winner = user1
                 break
             elif (self.game.player2_score == 5):
-                self.winner = user2 
+                self.winner = user2
                 break
-        
+
         await self.send(text_data=json.dumps({
             'type': 'game_end',
             'winner': self.winner
