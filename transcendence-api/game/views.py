@@ -166,26 +166,27 @@ class GamePageView(APIView):
 
         return JsonResponse(data, status=status.HTTP_200_OK)
 
+class OfflineGameView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
 
-def offline_page(request):
-    token = request.GET.get('token')
-    user1 = request.GET.get('user1')
-    user2 = request.GET.get('user2')
-    user3 = request.GET.get('user3')
-    user4 = request.GET.get('user4')
+    def post(self,request):
+        user1 = request.data.get('user1')
+        user2 = request.data.get('user2')
+        user3 = request.data.get('user3')
+        user4 = request.data.get('user4')
 
-    if user3 is None and user4 is None:
-        match_type = '1v1'
-    else:
-        match_type = 'tournament'
+        if user3 is None or user4 is None:
+            match_type = '1v1'
+        else:
+            match_type = 'tournament'
 
-    context = {
-        'token': token,
-        'user1': user1,
-        'user2': user2,
-        'user3': user3,
-        'user4': user4,
-        'match_type': match_type,
-    }
-    return render(request, 'game/local.html', context)
+        data = {
+            'user1': user1,
+            'user2': user2,
+            'user3': user3,
+            'user4': user4,
+            'match_type': match_type,
+        }
+        return JsonResponse(data, status=status.HTTP_200_OK)
 
