@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import SaveGameView, RecentGamesView, InviteGameView, AcceptGameView, MatchingView, OfflineGameView, \
+from .views import RecentGamesView, InviteGameView, AcceptGameView, MatchingView, OfflineGameView, \
     GamePageView
 
 urlpatterns = [

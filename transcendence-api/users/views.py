@@ -27,19 +27,9 @@ from datetime import timedelta
 
 # Create your views here.
 
-def login_success(request):
-    code = request.GET.get('code')
-    if code :
-        response = JsonResponse({"message": "로그인 리다이렉트!"}
-                            , status=status.HTTP_200_OK)
-    else :
-        response = JsonResponse({"message": "로그인 리다이렉트 실패!"}
-                                , status=status.HTTP_400_BAD_REQUEST)
-    return response
-
 def get_code(request):
     client_id = 'u-s4t2ud-5165cfc59957b2a5cd674a6fc909e1e94378eff8b68d30144cbf571ed0b80ea1'
-    redirect_uri = 'http://localhost:8000/api/user/login/success'
+    redirect_uri = 'http://localhost:81/42oauth-redirect'
     response_type = 'code'
     oauth_url = f'https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={urllib.parse.quote(redirect_uri)}&response_type={response_type}'
 
@@ -50,7 +40,7 @@ def get_token(request):
     code = request.GET.get('code')  # 유저가 받은 코드를 여기에 입력합니다.
     client_id = 'u-s4t2ud-5165cfc59957b2a5cd674a6fc909e1e94378eff8b68d30144cbf571ed0b80ea1'  # 42에서 제공한 클라이언트 ID
     client_secret = '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'  # 42에서 제공한 클라이언트 시크릿
-    redirect_uri = 'http://localhost:8000/api/user/login/success'  # 이전에 사용한 리디렉션 URL
+    redirect_uri = 'http://localhost:81/42oauth-redirect'  # 이전에 사용한 리디렉션 URL
     grant_type = 'authorization_code'
     scope = 'public profile'  # 42에서 제공한 스코프
     token_url = 'https://api.intra.42.fr/oauth/token'
