@@ -16,12 +16,12 @@
     </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
-<!-- Django 템플릿에서 전달된 정보 -->
+<!-- Django 템플릿에서 전달된 정보
 {{ token|json_script:"token" }}
 {{ user1|json_script:"user1" }}
 {{ user2|json_script:"user2" }}
 {{ user3|json_script:"user3" }}
-{{ user4|json_script:"user4" }}
+{{ user4|json_script:"user4" }} -->
 
 <script>
     // Django 템플릿에서 전달된 정보를 JavaScript로 가져오기
@@ -102,7 +102,6 @@
 
     socket.onmessage = function(event) {
         const data = JSON.parse(event.data);
-        // console.log("Received data:", data); 
         if(data.type === 'game_loop'){
             console.log(data.state.player1_score, data.state.player2_score); // 1 : 0으로 시작.
             const ball_position = data.state.ball_pos;
@@ -118,9 +117,7 @@
             player2Paddle.position.z = player2_paddle_z;
 
             // 점수 업데이트
-            // document.getElementById('player1_score').textContent = `Player 1: ${data.state.player1_score}`;
             document.getElementById('player1_score').textContent = `${data.state.player1}: ${data.state.player1_score}`;
-            // document.getElementById('player2_score').textContent = `Player 2: ${data.state.player2_score}`;
             document.getElementById('player2_score').textContent = `${data.state.player2}: ${data.state.player2_score}`;
         }
 
