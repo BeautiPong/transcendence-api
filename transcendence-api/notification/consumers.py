@@ -71,11 +71,13 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     async def request_friend(self, event):
         sender = event["sender"]
         message = event["message"]
+        tag = event["tag"]
 
         await self.send(text_data=json.dumps({
             'sender': sender,
             'type': 'request_fr',
-            'message': message
+            'message': message,
+            'tag' : tag
         }))
 
     async def invite_game(self, event):
