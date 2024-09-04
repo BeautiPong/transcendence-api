@@ -1,15 +1,13 @@
-import aioredis
 from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
-from django.views.decorators.csrf import csrf_exempt
+from channels.layers import get_channel_layer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.exceptions import NotFound, ValidationError
-
 from scoreHistory.models import ScoreHistory
 from users.models import CustomUser
 from users.serializers import UserScoreSerializer
@@ -19,61 +17,6 @@ from game.serializers import GameScoreHistorySerializer
 from friend.views import check_friend_status
 from friend.models import Friend
 
-
-class SaveGameView(APIView):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
-
-    def post(self, request):
-        data = request.data
-        try:
-            user1 = CustomUser.objects.get(nickname=data['user1_nickname'])
-            user2 = CustomUser.objects.get(nickname=data['user2_nickname'])
-        except CustomUser.DoesNotExist:
-            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
-
-        game_data = {
-            'user1': user1.id,
-            'user2': user2.id,
-            'user1_score': data['user1_score'],
-            'user2_score': data['user2_score']
-        }
-        serializer = GameScoreHistorySerializer(data=game_data)
-        if serializer.is_valid():
-            serializer.save()
-            if data['user1_score'] > data['user2_score']:
-                user1_data = {
-                    "match_cnt": user1.match_cnt + 1,
-                    "win_cnt": user1.win_cnt + 1,
-                    "score": user1.score + 20
-                }
-                user2_data = {
-                    "match_cnt": user2.match_cnt + 1,
-                    "win_cnt": user2.win_cnt,
-                    "score": user1.score - 20
-                }
-            else:
-                user1_data = {
-                    "match_cnt": user1.match_cnt + 1,
-                    "win_cnt": user1.win_cnt,
-                    "score": user1.score - 20
-                }
-                user2_data = {
-                    "match_cnt": user2.match_cnt + 1,
-                    "win_cnt": user2.win_cnt + 1,
-                    "score": user1.score + 20
-                }
-
-            user1_serializer = UserScoreSerializer(user1, data=user1_data)
-            user2_serializer = UserScoreSerializer(user2, data=user2_data)
-            if user1_serializer.is_valid() and user2_serializer.is_valid():
-                user1_serializer.save()
-                user2_serializer.save()
-
-                ScoreHistory.objects.create(user=user1, score=user1.score)
-                ScoreHistory.objects.create(user=user2, score=user2.score)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class RecentGamesView(APIView):
@@ -86,7 +29,7 @@ class RecentGamesView(APIView):
         except CustomUser.DoesNotExist:
             return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        recent_games = Game.objects.filter(user1=user).order_by('-create_time')[:5]
+        recent_games = Game.objects.filter(user1=user).order_by('-create_time')[:4]
         serializer = GameSerializer(recent_games, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -173,13 +116,12 @@ class AcceptGameView(APIView):
         return Response({"message": "Join Game"}, status=status.HTTP_201_CREATED)
 
 class MatchingView(APIView):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
-    def get(self, request):
-        token = request.GET.get('token')
-        waiting_room = request.GET.get('waiting_room')
-        room_name = request.GET.get('room_name')
+    def post(self, request):
+        waiting_room = request.data.get('waiting_room')
+        room_name = request.data.get('room_name')
         user = request.user
 
         if room_name:
@@ -187,16 +129,64 @@ class MatchingView(APIView):
             async_to_sync(channel_layer.group_send)(
                 waiting_room,
                 {
-                    # 프론트에서 이거 보고 매칭 웹소켓 연결 시작해야 됨(룸 네임 주면서,,)
                     'type': 'start_game_with_friend',
                     'waiting_room': waiting_room,
                     'room_name': room_name,
                     'message': 'start game with friend'
                 }
             )
-            # return Response({"message": "Start Game with friend"}, status=status.HTTP_200_OK)
 
-        if token:
-            return render(request, 'game/match.html', {'jwt_token': token, 'waiting_room': waiting_room, 'room_name': room_name})
+        if user.is_authenticated:
+            token = str(request.auth)
+            data = {
+                'jwt_token': token,
+                'waiting_room': waiting_room,
+                'room_name': room_name
+            }
+            return JsonResponse(data, status=status.HTTP_200_OK)
         else:
-            return redirect('/login_page/')
+            return JsonResponse({'error': 'User not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+class GamePageView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def get(self, request, room_name):
+        user = request.user
+
+        if not user.is_authenticated:
+            return JsonResponse({'error': 'User not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 게임 페이지에 필요한 정보를 JSON으로 전달
+        data = {
+            'room_name': room_name,
+            'jwt_token': str(request.auth)
+        }
+
+        return JsonResponse(data, status=status.HTTP_200_OK)
+
+class OfflineGameView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def post(self,request):
+        user1 = request.data.get('user1')
+        user2 = request.data.get('user2')
+        user3 = request.data.get('user3')
+        user4 = request.data.get('user4')
+
+        if user3 is None or user4 is None:
+            match_type = '1v1'
+        else:
+            match_type = 'tournament'
+
+        data = {
+            'user1': user1,
+            'user2': user2,
+            'user3': user3,
+            'user4': user4,
+            'match_type': match_type,
+        }
+        return JsonResponse(data, status=status.HTTP_200_OK)
+

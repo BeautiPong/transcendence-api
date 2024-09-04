@@ -727,6 +727,22 @@ COPY public.friend_friend (id, user1_victory_num, user2_victory_num, status, use
 --
 
 COPY public.game_game (id, user1_score, user2_score, create_time, user1_id, user2_id) FROM stdin;
+1	0	5	2024-09-03 07:23:53.326315+00	1	2
+2	5	0	2024-09-03 07:23:53.32957+00	2	1
+3	0	5	2024-09-03 07:25:55.844581+00	1	2
+4	5	0	2024-09-03 07:25:55.846594+00	2	1
+5	0	6	2024-09-03 07:25:57.044981+00	2	1
+6	6	0	2024-09-03 07:25:57.047192+00	1	2
+7	0	5	2024-09-03 07:26:54.239112+00	2	1
+8	5	0	2024-09-03 07:26:54.242104+00	1	2
+9	0	5	2024-09-03 07:29:36.970896+00	2	1
+10	5	0	2024-09-03 07:29:36.973199+00	1	2
+11	0	5	2024-09-03 07:30:47.366827+00	1	2
+12	5	0	2024-09-03 07:30:47.369694+00	2	1
+13	0	5	2024-09-03 07:32:09.161246+00	1	2
+14	5	0	2024-09-03 07:32:09.163206+00	2	1
+15	0	5	2024-09-03 07:32:30.640573+00	1	2
+16	5	0	2024-09-03 07:32:30.642519+00	2	1
 \.
 
 
@@ -751,6 +767,22 @@ COPY public.otp_otp (id, otp, created_at, user_id) FROM stdin;
 --
 
 COPY public."scoreHistory_scorehistory" (id, score, create_time, user_id) FROM stdin;
+1	980	2024-09-03 07:23:53.332671+00	1
+2	1020	2024-09-03 07:23:53.334224+00	2
+3	960	2024-09-03 07:25:55.849176+00	1
+4	1040	2024-09-03 07:25:55.849822+00	2
+5	1020	2024-09-03 07:25:57.050491+00	2
+6	980	2024-09-03 07:25:57.05133+00	1
+7	1000	2024-09-03 07:26:54.244747+00	2
+8	1000	2024-09-03 07:26:54.24543+00	1
+9	980	2024-09-03 07:29:36.976105+00	2
+10	1020	2024-09-03 07:29:36.976834+00	1
+11	1000	2024-09-03 07:30:47.373025+00	1
+12	1000	2024-09-03 07:30:47.373896+00	2
+13	980	2024-09-03 07:32:09.166609+00	1
+14	1020	2024-09-03 07:32:09.167544+00	2
+15	960	2024-09-03 07:32:30.645492+00	1
+16	1040	2024-09-03 07:32:30.647189+00	2
 \.
 
 
@@ -770,6 +802,15 @@ COPY public.token_blacklist_outstandingtoken (id, token, created_at, expires_at,
 1	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNDY0NzkzNiwiaWF0IjoxNzI0MDQzMTM2LCJqdGkiOiI0MmM4NGY4YWU4YjE0YjI0ODkxYTUwMDliYzliODQ5NCIsInVzZXJfaWQiOjF9._SvxE-TTG-pjJGpMxP1imOlDUx4v6EeUuJgYn1mX5yc	2024-08-19 04:52:16.765886+00	2024-08-26 04:52:16+00	1	42c84f8ae8b14b24891a5009bc9b8494
 2	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNDY0Nzk0MCwiaWF0IjoxNzI0MDQzMTQwLCJqdGkiOiI3NTc5Zjg4ZmMyYmE0ZTk3ODU4OGMxMzdjNDllZGRlYiIsInVzZXJfaWQiOjJ9.7qLxJ4J4fP8CVwEO0lsBDhMsk07eromV-u7lDhxuryw	2024-08-19 04:52:20.516684+00	2024-08-26 04:52:20+00	2	7579f88fc2ba4e978588c137c49eddeb
 3	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNDY0Nzk0NCwiaWF0IjoxNzI0MDQzMTQ0LCJqdGkiOiI0MmQ1OTUyYjU4YmI0OWNlYWUxM2UzNTliYzE1YWIwZiIsInVzZXJfaWQiOjN9.IkIJ_P2QX1V8RnBk53N81mqk7FiSD9Cl7WhHKu18jxM	2024-08-19 04:52:24.665254+00	2024-08-26 04:52:24+00	3	42d5952b58bb49ceae13e359bc15ab0f
+4	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNTk0OTIwMSwiaWF0IjoxNzI1MzQ0NDAxLCJqdGkiOiI5NTAyZmUxY2Q2MTA0YjU4YTZkNjRjNmE4YmY0MDE5NiIsInVzZXJfaWQiOjJ9.OGRXOpKbO2ZzP1TBQiWzzDQvbOdnhUmOsfW7dFWoc30	2024-09-03 06:20:01.326945+00	2024-09-10 06:20:01+00	2	9502fe1cd6104b58a6d64c6a8bf40196
+5	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNTk1MDQwNiwiaWF0IjoxNzI1MzQ1NjA2LCJqdGkiOiI2YTRmOWQ2YjNhNjg0MmU1OWY2NGE1ZDRlN2MyZmY1MiIsInVzZXJfaWQiOjJ9.N19HhfHwAv7zQJItrHgEUz0ilV5liLnwHdvnAzLKh_A	2024-09-03 06:40:06.389639+00	2024-09-10 06:40:06+00	2	6a4f9d6b3a6842e59f64a5d4e7c2ff52
+6	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNTk1MDQ2MCwiaWF0IjoxNzI1MzQ1NjYwLCJqdGkiOiJmNWQzZjIxZDYwMzg0NTI1OWJhYWQyMjBkODYxZGM3OCIsInVzZXJfaWQiOjF9.TcGnxizoQwDxfWQGXaB6RySk2FWUJc1LKpc7_mE_pRo	2024-09-03 06:41:00.998786+00	2024-09-10 06:41:00+00	1	f5d3f21d603845259baad220d861dc78
+7	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNTk1MDk5OCwiaWF0IjoxNzI1MzQ2MTk4LCJqdGkiOiIzZDM1MjExYzg2YTg0YzlmODgyNmZhZmZjOWU2MjhmOSIsInVzZXJfaWQiOjJ9.wVzLIILXeXo9ZXGK-QpD2TPsivyDDkE4HDrfZeGg4mY	2024-09-03 06:49:58.251545+00	2024-09-10 06:49:58+00	2	3d35211c86a84c9f8826faffc9e628f9
+8	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNTk1MTAxMiwiaWF0IjoxNzI1MzQ2MjEyLCJqdGkiOiJlNTlkZTBhMjdlODY0NjA2YmU1ZjE1YTdmZDg2YjU4ZCIsInVzZXJfaWQiOjF9.Rtiq4-In3wxy9enHZGHAdDdJht0PHCi4I1VPITjBtlw	2024-09-03 06:50:12.525651+00	2024-09-10 06:50:12+00	1	e59de0a27e864606be5f15a7fd86b58d
+9	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNTk1Mjk5OCwiaWF0IjoxNzI1MzQ4MTk4LCJqdGkiOiI4ZTcxODI2OTZkNjY0ZjU3ODgyMDVhOWMzOWMyZjEzOSIsInVzZXJfaWQiOjJ9.VCmciZPAAW7WbKWSoozqx91LTFFQ9P5kFWtBaYzephE	2024-09-03 07:23:18.680921+00	2024-09-10 07:23:18+00	2	8e7182696d664f5788205a9c39c2f139
+10	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNTk1MzAxOCwiaWF0IjoxNzI1MzQ4MjE4LCJqdGkiOiI2NDRmMzdkOWJkMDk0YzUwODA2MTRmZGFjOTgwNGQ3MCIsInVzZXJfaWQiOjF9.7G8_VIJ9D8onxCCXPaYb3dQgSmlDm2SHBViiucQV4T8	2024-09-03 07:23:38.316002+00	2024-09-10 07:23:38+00	1	644f37d9bd094c5080614fdac9804d70
+11	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNTk1MzE0MiwiaWF0IjoxNzI1MzQ4MzQyLCJqdGkiOiIwZDA5MDJmNWRiMmQ0Y2I1YmM2ODU0YzI1MGIxNDkyZiIsInVzZXJfaWQiOjF9.Id_yDGXXslIEYZtNDjm9isCQR3IMuqnEbuxvRWOCnp8	2024-09-03 07:25:42.365163+00	2024-09-10 07:25:42+00	1	0d0902f5db2d4cb5bc6854c250b1492f
+12	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNTk1MzQ4NywiaWF0IjoxNzI1MzQ4Njg3LCJqdGkiOiIyNjUyYjliMGRkOGU0ZjM4OGEzMGQ3YWQ4YzY5NzExYyIsInVzZXJfaWQiOjF9.Hdjw3aurt-23JL98Gp65o3pzQiZ_vrUjqBRLkeR_ECI	2024-09-03 07:31:27.613118+00	2024-09-10 07:31:27+00	1	2652b9b0dd8e4f388a30d7ad8c69711c
 \.
 
 
@@ -778,9 +819,9 @@ COPY public.token_blacklist_outstandingtoken (id, token, created_at, expires_at,
 --
 
 COPY public.users_customuser (id, password, last_login, is_superuser, nickname, "userID", "oauthID", score, image, is_active, is_staff, date_joined, email, is_in_game, is_online, last_logout, match_cnt, win_cnt) FROM stdin;
-1	pbkdf2_sha256$600000$p49xPHhmHaW1NR7QSFZWaG$wlTC4ktZx/a66YPC0CgTQ2MCHSYOyQ3dOxkqpANTMyM=	\N	f	dongseo	dongseo	\N	1000	\N	t	f	2024-08-19 04:50:50.260779+00	dongseo@com	f	f	2024-08-19 04:50:50.095345+00	0	0
-2	pbkdf2_sha256$600000$F38M0rIGqP6R01c2Vq2XZR$x9Wm2mBo1LZ8Bk+4Zbvg5ifUVswgWQBnDL64LoDij9o=	\N	f	ttt	tt	\N	1000	\N	t	f	2024-08-19 04:51:29.308751+00	tt@com	f	f	2024-08-19 04:51:29.14337+00	0	0
 3	pbkdf2_sha256$600000$iwgZ2ot13G06xmmtrKsB3t$ulywcypcW63UzbnxEfTpfl/DDz7v9T7bqeowqnmyKEE=	\N	f	qqq	qq	\N	1000	\N	t	f	2024-08-19 04:51:41.902158+00	test@test	f	f	2024-08-19 04:51:41.736611+00	0	0
+1	pbkdf2_sha256$600000$p49xPHhmHaW1NR7QSFZWaG$wlTC4ktZx/a66YPC0CgTQ2MCHSYOyQ3dOxkqpANTMyM=	\N	f	dongseo	dongseo	\N	960	\N	t	f	2024-08-19 04:50:50.260779+00	dongseo@com	f	f	2024-09-03 07:01:33.499151+00	8	3
+2	pbkdf2_sha256$600000$F38M0rIGqP6R01c2Vq2XZR$x9Wm2mBo1LZ8Bk+4Zbvg5ifUVswgWQBnDL64LoDij9o=	\N	f	ttt	tt	\N	1040	\N	t	f	2024-08-19 04:51:29.308751+00	tt@com	f	f	2024-09-03 07:01:32.663453+00	8	5
 \.
 
 
@@ -860,7 +901,7 @@ SELECT pg_catalog.setval('public.friend_friend_id_seq', 4, true);
 -- Name: game_game_id_seq; Type: SEQUENCE SET; Schema: public; Owner: beautipong
 --
 
-SELECT pg_catalog.setval('public.game_game_id_seq', 1, false);
+SELECT pg_catalog.setval('public.game_game_id_seq', 16, true);
 
 
 --
@@ -881,7 +922,7 @@ SELECT pg_catalog.setval('public.otp_otp_id_seq', 1, false);
 -- Name: scoreHistory_scorehistory_id_seq; Type: SEQUENCE SET; Schema: public; Owner: beautipong
 --
 
-SELECT pg_catalog.setval('public."scoreHistory_scorehistory_id_seq"', 1, false);
+SELECT pg_catalog.setval('public."scoreHistory_scorehistory_id_seq"', 16, true);
 
 
 --
@@ -895,7 +936,7 @@ SELECT pg_catalog.setval('public.token_blacklist_blacklistedtoken_id_seq', 1, fa
 -- Name: token_blacklist_outstandingtoken_id_seq; Type: SEQUENCE SET; Schema: public; Owner: beautipong
 --
 
-SELECT pg_catalog.setval('public.token_blacklist_outstandingtoken_id_seq', 3, true);
+SELECT pg_catalog.setval('public.token_blacklist_outstandingtoken_id_seq', 12, true);
 
 
 --

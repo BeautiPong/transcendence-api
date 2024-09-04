@@ -46,14 +46,14 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 'message': f"{sender} 님이 친구 요청을 보냈습니다!"
             })
 
-        not_checked_messages = message.views.get_my_not_check_message(user)
-        for not_checked_message in not_checked_messages:
-            sender = not_checked_message.sender
+        not_checked_users = message.views.get_users_with_unread_messages(user)
+        for sender in not_checked_users:
             notifications.append({
                 'type': 'pend_messages',
                 'sender': sender.nickname,
-                'message': f"{not_checked_message.content}"
+                'message': f"{sender.nickname} 님으로부터 읽지 않은 메시지가 있습니다."
             })
+
         return notifications
 
     async def send_notifications(self, user):
@@ -71,11 +71,13 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     async def request_friend(self, event):
         sender = event["sender"]
         message = event["message"]
+        tag = event["tag"]
 
         await self.send(text_data=json.dumps({
             'sender': sender,
             'type': 'request_fr',
-            'message': message
+            'message': message,
+            'tag' : tag
         }))
 
     async def invite_game(self, event):

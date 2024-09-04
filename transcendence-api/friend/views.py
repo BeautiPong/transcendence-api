@@ -89,7 +89,8 @@ class AddFriend(APIView) :
                 {
                     'type': 'request_friend',
                     'sender': user.nickname,
-                    'message': f"{user.nickname} 님이 친구 요청을 보냈습니다!!"
+                    'message': f"{user.nickname} 님이 친구 요청을 보냈습니다!!",
+                    'tag' : 'request'
                 }
                 )
 
@@ -130,7 +131,8 @@ class AcceptFriend(APIView) :
             {
                 'type': 'request_friend',
                 'sender': user.nickname,
-                'message': f"{user.nickname} 님이 친구 요청을 수락했습니다!!"
+                'message': f"{user.nickname} 님이 친구 요청을 수락했습니다!!",
+                'tag' : 'accept'
             }
         )
 
@@ -224,8 +226,27 @@ def get_my_friends_request(user) :
     test = Friend.objects.filter(
         user2=user,
         status=Friend.Status.SEND,
-        create_time__gte=user.last_logout  # last_activity_time 이후의 요청만 가져오기
     ).all()
     return test
 
 
+# 친구 조회
+class SearchFriend(APIView) :
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def get(self, request, friend_nickname) :
+
+        print(f"Received request to find friend with nickname: {friend_nickname}")
+
+        try:
+            find_friend = CustomUser.objects.get(nickname=friend_nickname)
+
+            friend_data = {
+                "name": find_friend.nickname,
+                "image": find_friend.image
+            }
+            return Response(friend_data, status=status.HTTP_200_OK)
+
+        except CustomUser.DoesNotExist:
+            raise NotFound(detail="Friend does not exist.", code=status.HTTP_404_NOT_FOUND)

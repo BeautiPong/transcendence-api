@@ -24,68 +24,76 @@ import json
 from users.utils import get_user_info
 from datetime import timedelta
 
+# Create your views here.
+
 def get_code(request):
     client_id = 'u-s4t2ud-5165cfc59957b2a5cd674a6fc909e1e94378eff8b68d30144cbf571ed0b80ea1'
-    redirect_uri = 'http://localhost:5500/42oath-redirect'
+    redirect_uri = 'http://localhost:81/42oauth-redirect'
     response_type = 'code'
     oauth_url = f'https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={urllib.parse.quote(redirect_uri)}&response_type={response_type}'
 
     return HttpResponseRedirect(oauth_url)  # redirect to 42 login page
 
 def get_token(request):
-    code = request.GET.get('code')  # 유저가 받은 코드를 여기에 입력합니다.
-    client_id = 'u-s4t2ud-5165cfc59957b2a5cd674a6fc909e1e94378eff8b68d30144cbf571ed0b80ea1'  # 42에서 제공한 클라이언트 ID
-    client_secret = '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'  # 42에서 제공한 클라이언트 시크릿
-    redirect_uri = 'http://localhost:5500/42oath-redirect'  # 이전에 사용한 리디렉션 URL
-    grant_type = 'authorization_code'
-    scope = 'public profile'  # 42에서 제공한 스코프
-    token_url = 'https://api.intra.42.fr/oauth/token'
+    if request.method == 'POST':
+        code = request.GET.get('code')
+        client_id = 'u-s4t2ud-5165cfc59957b2a5cd674a6fc909e1e94378eff8b68d30144cbf571ed0b80ea1'  # 42에서 제공한 클라이언트 ID
+        client_secret = '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'  # 42에서 제공한 클라이언트 시크릿
+        redirect_uri = 'http://localhost:81/42oauth-redirect'  # 이전에 사용한 리디렉션 URL
+        grant_type = 'authorization_code'
+        scope = 'public profile'  # 42에서 제공한 스코프
+        token_url = 'https://api.intra.42.fr/oauth/token'
 
-    # 액세스 토큰 요청을 위한 데이터
-    data = {
-        'grant_type': grant_type,
-        'code': code,
-        'client_id': client_id,
-        'client_secret': client_secret,
-        'redirect_uri': redirect_uri,
-        'scope': scope,
-    }
+        # 액세스 토큰 요청을 위한 데이터
+        token_data = {
+            'grant_type': grant_type,
+            'code': code,
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'redirect_uri': redirect_uri,
+            'scope': scope,
+        }
 
-    # POST 요청을 통해 액세스 토큰 요청
-    response = requests.post(token_url, data=data)
+        # POST 요청을 통해 액세스 토큰 요청
+        response = requests.post(token_url, data=token_data)
 
-    # 응답 데이터 처리
-    if response.status_code == 200:
-        ft_access_token = response.json().get('access_token')
+        # 응답 데이터 처리
+        if response.status_code == 200:
+            ft_access_token = response.json().get('access_token')
+        else:
+            return JsonResponse({'error': 'Failed to obtain access token'}, status=response.status_code)
+
+        user_url = 'https://api.intra.42.fr/v2/me'
+        headers = {
+            'Authorization': f'Bearer {ft_access_token}',
+        }
+        user_response = requests.get(user_url, headers=headers)
+        response_data = user_response.json()
+        intra_id = response_data.get('login')
+        email = response_data.get('email')
+        image = response_data.get('image.list')
+
+        user = CustomUser.objects.filter(oauthID=intra_id).first()
+        if user:
+            message = "로그인 성공."
+        else:
+            user = CustomUser.objects.create_ft_user(oauthID=intra_id, email=email, image=image)
+            message = "42user 회원가입 성공!"
+
+        token = TokenObtainPairSerializer.get_token(user)  # refresh token 생성
+        refresh_token = str(token)
+        access_token = str(token.access_token)  # access token 생성
+
+        # 응답 데이터
+        response_data = {
+            "message": message,
+            "access_token": access_token,
+            "refresh_token": refresh_token
+        }
+
+        return JsonResponse(response_data, status=status.HTTP_200_OK)
     else:
-        return JsonResponse({'error': 'Failed to obtain access token'},
-                            status=response.status_code)
-
-    user_url = 'https://api.intra.42.fr/v2/me'
-    headers = {
-        'Authorization': f'Bearer {ft_access_token}',
-    }
-    response = requests.get(user_url, headers=headers)
-    response_data = response.json()
-    intra_id = response_data.get('login')
-    email = response_data.get('email')
-    image = response_data.get('image.list')
-
-    user = CustomUser.objects.filter(oauthID=intra_id).first()
-    if user:
-        response = JsonResponse({"message": "로그인 성공."}
-                                , status=status.HTTP_200_OK)
-    else:
-        user = CustomUser.objects.create_ft_user(oauthID=intra_id, email=email, image=image)
-        response = JsonResponse({"message": "42user 회원가입 성공!"}
-                                , status=status.HTTP_201_CREATED)
-
-    token = TokenObtainPairSerializer.get_token(user)  # refresh token 생성
-    refresh_token = str(token)
-    access_token = str(token.access_token)  # access token 생성
-    response.set_cookie("access_token", access_token, httponly=True)
-    response.set_cookie("refresh_token", refresh_token, httponly=True)
-    return response
+        return JsonResponse({'error': 'Invalid method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 class CustomPasswordValidator:
     def validate(self, password):
