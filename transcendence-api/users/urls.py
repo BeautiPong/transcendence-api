@@ -1,6 +1,18 @@
-from .views import get_code, get_token, UserInfoView, UserRankingView, login_and_redirect
+from .views import (
+    check_user, 
+    join,
+    login, 
+    LogoutView, 
+    SetNicknameView,
+    UserProfileView, 
+    UserProfileUpdateView, 
+    get_code, 
+    get_token, 
+    UserInfoView, 
+    UserRankingView, 
+    login_and_redirect, 
+)
 from django.urls import path
-from .views import join, login, LogoutView, UserProfileView, UserProfileUpdateView, check_user
 from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
@@ -8,6 +20,7 @@ urlpatterns = [
     path('account/join/', join, name='join'),
     path('account/login/', login, name='login'),
     path('account/logout/', LogoutView.as_view(), name='logout'),
+    path('account/set-nickname/', SetNicknameView.as_view(), name='set-nickname'),
     path('profile/', UserProfileView.as_view(), name='user_profile'),
     path('profile/update/', UserProfileUpdateView.as_view(), name='profile-update'),
 

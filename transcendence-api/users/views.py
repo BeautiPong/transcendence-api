@@ -92,6 +92,28 @@ def get_token(request):
 
     return JsonResponse(response_data, status=status.HTTP_200_OK)
 
+# 42회원가입 닉네임 설정
+class SetNicknameView(APIView) :
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def post(self, request):
+        data = request.data
+        new_nickname = data.get('nickname')
+
+        # 닉네임 중복 체크
+        if CustomUser.objects.filter(nickname=new_nickname).exists():
+            return Response({"message": "이미 사용 중인 닉네임입니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 현재 로그인한 유저 정보 가져오기
+        user = request.user
+
+        # 닉네임 설정
+        user.nickname = new_nickname
+        user.save()
+
+        return Response({"message": "닉네임 설정이 완료되었습니다."}, status=status.HTTP_200_OK)
+
 class CustomPasswordValidator:
     def validate(self, password):
         if len(password) < 8:
