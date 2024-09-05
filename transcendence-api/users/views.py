@@ -75,25 +75,28 @@ def get_token(request):
     user = CustomUser.objects.filter(oauthID=intra_id).first()
     if user:
         message = "로그인 성공."
+        token = TokenObtainPairSerializer.get_token(user)  # refresh token 생성
+        refresh_token = str(token)
+        access_token = str(token.access_token)  # access token 생성
+        response_data = {
+            "message": message,
+            "access_token": access_token,
+            "refresh_token": refresh_token
+        }
     else:
         user = CustomUser.objects.create_ft_user(oauthID=intra_id, email=email, image=image)
         message = "42user 회원가입 성공!"
-
-    token = TokenObtainPairSerializer.get_token(user)  # refresh token 생성
-    refresh_token = str(token)
-    access_token = str(token.access_token)  # access token 생성
-
-    # 응답 데이터
-    response_data = {
-        "message": message,
-        "access_token": access_token,
-        "refresh_token": refresh_token
-    }
+        temp_token = AccessToken.for_user(user) # temp token 생성
+        temp_token.set_exp(lifetime=timedelta(minutes=5))  # 토큰 유효 기간을 10분으로 설정
+        response_data = {
+            "message": message,
+            "temp_token": str(temp_token)
+        }
 
     return JsonResponse(response_data, status=status.HTTP_200_OK)
 
 # 42회원가입 닉네임 설정
-class SetNicknameView(APIView) :
+class OauthNicknameView(APIView) :
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 

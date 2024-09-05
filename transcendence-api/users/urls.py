@@ -3,7 +3,7 @@ from .views import (
     join,
     login, 
     LogoutView, 
-    SetNicknameView,
+    OauthNicknameView,
     UserProfileView, 
     UserProfileUpdateView, 
     get_code, 
@@ -20,7 +20,7 @@ urlpatterns = [
     path('account/join/', join, name='join'),
     path('account/login/', login, name='login'),
     path('account/logout/', LogoutView.as_view(), name='logout'),
-    path('account/set-nickname/', SetNicknameView.as_view(), name='set-nickname'),
+    path('account/nickname/', OauthNicknameView.as_view(), name='nickname'),
     path('profile/', UserProfileView.as_view(), name='user_profile'),
     path('profile/update/', UserProfileUpdateView.as_view(), name='profile-update'),
 
