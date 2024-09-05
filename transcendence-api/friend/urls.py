@@ -8,5 +8,6 @@ urlpatterns = [
     path('block/<str:friend_nickname>/', BlockFriend.as_view(), name='block_friend'),  #친구차단
     path('reblock/<str:friend_nickname>/', ReBlockFriend.as_view(), name='reblock_friend'),  #친구차단해제
     path('delete/<str:friend_nickname>/', DeleteFriend.as_view(), name='delete_friend'),  #친구삭제
+    path('search/<str:friend_nickname>/', SearchFriend.as_view(), name='search_friend'), #친구 검색_조회
     # path('test/', AddFriendsV2.as_view(),name='test'),
 ]
