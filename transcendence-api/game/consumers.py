@@ -46,15 +46,20 @@ class MatchingConsumer(AsyncWebsocketConsumer):
         user = self.scope['user']
         if user.is_authenticated:
             await self.set_user_game_status(user, False)
-        if self.waiting_room:
-            await self.channel_layer.group_discard(self.waiting_room, self.channel_name)
-            await self.redis_client.srem(self.waiting_room, user.nickname.encode())
-        if self.room_name:
-            await self.channel_layer.group_discard(self.room_name, self.channel_name)
-            await self.remove_user_from_room(self.room_name, user.nickname)
-        else:
-            await self.redis_client.lrem(self.matchmaking_queue_key, 0, user.nickname)
+
+        # Redis 클라이언트가 설정된 경우에만 Redis 관련 작업을 수행
+        if hasattr(self, 'redis_client') and self.redis_client:
+            if self.waiting_room:
+                await self.channel_layer.group_discard(self.waiting_room, self.channel_name)
+                await self.redis_client.srem(self.waiting_room, user.nickname.encode())
+            if self.room_name:
+                await self.channel_layer.group_discard(self.room_name, self.channel_name)
+                await self.remove_user_from_room(self.room_name, user.nickname)
+            else:
+                await self.redis_client.lrem(self.matchmaking_queue_key, 0, user.nickname)
+
         await self.channel_layer.group_discard(f'user_game_{user.nickname}', self.channel_name)
+
 
     @database_sync_to_async
     def set_user_game_status(self, user, status):
@@ -229,7 +234,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             while self.game_active:
                 await self.update_ball_position()
                 await self.send_game_state()
-                await asyncio.sleep(0.01)  # 게임 속도 조절
+                await asyncio.sleep(0.05)  # 게임 속도 조절
         except Exception as e:
             print(f"Error in game_loop: {e}")
             await self.close()
@@ -289,7 +294,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         try:
             if not self.game_active:
                 return  # 게임이 종료된 경우 게임 상태 전송 중지
-
             await self.channel_layer.group_send(
                 self.room_name,
                 {
