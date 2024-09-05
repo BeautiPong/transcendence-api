@@ -234,7 +234,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             while self.game_active:
                 await self.update_ball_position()
                 await self.send_game_state()
-                await asyncio.sleep(0.05)  # 게임 속도 조절
+                await asyncio.sleep(0.02)  # 게임 속도 조절
         except Exception as e:
             print(f"Error in game_loop: {e}")
             await self.close()
