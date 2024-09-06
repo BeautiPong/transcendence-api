@@ -29,7 +29,7 @@ class RecentGamesView(APIView):
         except CustomUser.DoesNotExist:
             return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        recent_games = Game.objects.filter(user1=user).order_by('-create_time')[:5]
+        recent_games = Game.objects.filter(user1=user).order_by('-create_time')[:4]
         serializer = GameSerializer(recent_games, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

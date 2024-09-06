@@ -24,7 +24,6 @@ import json
 from users.utils import get_user_info
 from datetime import timedelta
 
-
 # Create your views here.
 
 def get_code(request):
@@ -35,9 +34,8 @@ def get_code(request):
 
     return HttpResponseRedirect(oauth_url)  # redirect to 42 login page
 
-
 def get_token(request):
-    code = request.GET.get('code')  # 유저가 받은 코드를 여기에 입력합니다.
+    code = request.GET.get('code')
     client_id = 'u-s4t2ud-5165cfc59957b2a5cd674a6fc909e1e94378eff8b68d30144cbf571ed0b80ea1'  # 42에서 제공한 클라이언트 ID
     client_secret = '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'  # 42에서 제공한 클라이언트 시크릿
     redirect_uri = 'http://localhost:81/42oauth-redirect'  # 이전에 사용한 리디렉션 URL
@@ -46,7 +44,7 @@ def get_token(request):
     token_url = 'https://api.intra.42.fr/oauth/token'
 
     # 액세스 토큰 요청을 위한 데이터
-    data = {
+    token_data = {
         'grant_type': grant_type,
         'code': code,
         'client_id': client_id,
@@ -56,40 +54,68 @@ def get_token(request):
     }
 
     # POST 요청을 통해 액세스 토큰 요청
-    response = requests.post(token_url, data=data)
+    response = requests.post(token_url, data=token_data)
 
     # 응답 데이터 처리
     if response.status_code == 200:
         ft_access_token = response.json().get('access_token')
     else:
-        return JsonResponse({'error': 'Failed to obtain access token'},
-                            status=response.status_code)
+        return JsonResponse({'error': 'Failed to obtain access token'}, status=response.status_code)
 
     user_url = 'https://api.intra.42.fr/v2/me'
     headers = {
         'Authorization': f'Bearer {ft_access_token}',
     }
-    response = requests.get(user_url, headers=headers)
-    response_data = response.json()
+    user_response = requests.get(user_url, headers=headers)
+    response_data = user_response.json()
     intra_id = response_data.get('login')
     email = response_data.get('email')
     image = response_data.get('image.list')
 
     user = CustomUser.objects.filter(oauthID=intra_id).first()
     if user:
-        response = JsonResponse({"message": "로그인 성공."}
-                                , status=status.HTTP_200_OK)
+        message = "로그인 성공."
+        token = TokenObtainPairSerializer.get_token(user)  # refresh token 생성
+        refresh_token = str(token)
+        access_token = str(token.access_token)  # access token 생성
+        response_data = {
+            "message": message,
+            "access_token": access_token,
+            "refresh_token": refresh_token
+        }
     else:
         user = CustomUser.objects.create_ft_user(oauthID=intra_id, email=email, image=image)
-        response = JsonResponse({"message": "42user 회원가입 성공!"}
-                                , status=status.HTTP_201_CREATED)
+        message = "42user 회원가입 성공!"
+        temp_token = AccessToken.for_user(user) # temp token 생성
+        temp_token.set_exp(lifetime=timedelta(minutes=5))  # 토큰 유효 기간을 10분으로 설정
+        response_data = {
+            "message": message,
+            "temp_token": str(temp_token)
+        }
 
-    token = TokenObtainPairSerializer.get_token(user)  # refresh token 생성
-    refresh_token = str(token)
-    access_token = str(token.access_token)  # access token 생성
-    response.set_cookie("access_token", access_token, httponly=True)
-    response.set_cookie("refresh_token", refresh_token, httponly=True)
-    return response
+    return JsonResponse(response_data, status=status.HTTP_200_OK)
+
+# 42회원가입 닉네임 설정
+class OauthNicknameView(APIView) :
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def post(self, request):
+        data = request.data
+        new_nickname = data.get('nickname')
+
+        # 닉네임 중복 체크
+        if CustomUser.objects.filter(nickname=new_nickname).exists():
+            return Response({"message": "이미 사용 중인 닉네임입니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 현재 로그인한 유저 정보 가져오기
+        user = request.user
+
+        # 닉네임 설정
+        user.nickname = new_nickname
+        user.save()
+
+        return Response({"message": "닉네임 설정이 완료되었습니다."}, status=status.HTTP_200_OK)
 
 class CustomPasswordValidator:
     def validate(self, password):
