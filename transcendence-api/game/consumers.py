@@ -12,26 +12,24 @@ from .models import Game
 
 class MatchingConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        user = self.scope['user']
+        self.user = self.scope['user']
         self.room_name = self.scope['url_route']['kwargs'].get('room_name', None)
         self.waiting_room = self.scope['url_route']['kwargs'].get('waiting_room', None)
 
-        if user.is_authenticated:
-            if user.is_in_game:
+        if self.user.is_authenticated:
+            if self.user.is_in_game:
                 self.close()
                 return
             self.redis_client = await aioredis.from_url("redis://redis")
-            await self.set_user_game_status(user, True)
-            await self.channel_layer.group_add(f'user_game_{user.nickname}', self.channel_name)
-
+            await self.channel_layer.group_add(f'user_game_{self.user.nickname}', self.channel_name)
             await self.accept()
 
             if not self.room_name:
                 self.matchmaking_queue_key = 'matchmaking_queue'
-                await self.redis_client.lpush(self.matchmaking_queue_key, user.nickname)
+                await self.redis_client.lpush(self.matchmaking_queue_key, self.user.nickname)
                 await self.match_users()
             else:
-                await self.add_user_to_room(self.room_name, user.nickname)
+                await self.add_user_to_room(self.room_name, self.user.nickname)
                 players_in_room = await self.check_room_capacity(self.room_name)
                 if players_in_room > 2:
                     await self.close()
@@ -41,6 +39,8 @@ class MatchingConsumer(AsyncWebsocketConsumer):
                 await self.check_and_start_game()
         else:
             await self.close()
+
+
 
     async def disconnect(self, close_code):
         user = self.scope['user']
@@ -127,9 +127,18 @@ class MatchingConsumer(AsyncWebsocketConsumer):
         }))
         await self.check_and_start_game()
 
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        if data['type'] == 'disconnect_matching':
+            # 매칭 WebSocket 연결을 종료
+            await self.close()
+
+
     async def check_and_start_game(self):
         players_in_room = await self.check_room_capacity(self.room_name)
         if players_in_room == 2:
+            # 게임이 시작될 때 매칭 WebSocket 연결을 종료
+
             await self.channel_layer.group_send(
                 self.room_name,
                 {
@@ -138,8 +147,13 @@ class MatchingConsumer(AsyncWebsocketConsumer):
                     "message": "Game started"
                 }
             )
+
+            await self.send(text_data=json.dumps({
+                'type': 'disconnect_matching',  # 연결 종료 신호
+            }))
             if self.waiting_room:
                 await self.channel_layer.group_discard(self.waiting_room, self.channel_name)
+
 
     async def game_start(self, event):
         # print("self.room_name", self.room_name)
@@ -158,6 +172,10 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.player_name = self.user.nickname
 
+        if self.user.is_authenticated:
+            if self.user.is_in_game:
+                self.close()
+                return
         # room_name을 '_'로 분리하여 두 플레이어의 닉네임을 가져옵니다.
         _, name1, name2 = self.room_name.split('_')
 
@@ -177,14 +195,16 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.add_user_to_room(self.room_name, self.player_name)
         players_in_room = await self.check_room_capacity(self.room_name)
 
+
         # 플레이어 설정 및 클라이언트에게 역할 전달
+        await self.set_user_game_status(self.user, True)
         if players_in_room == 1:
             if self.player_name == name1:
                 self.players = {'player1': name1, 'player2': name2}
             else:
                 self.players = {'player1': name2, 'player2': name1}
 
-            print(f"{self.player_name} is player1 in room {self.room_name}")
+            # print(f"{self.player_name} is player1 in room {self.room_name}")
             await self.send(text_data=json.dumps({
                 'type': 'assign_role',
                 'role': 'player1'
@@ -195,7 +215,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             else:
                 self.players = {'player1': name1, 'player2': name2}
 
-            print(f"{self.player_name} is player2 in room {self.room_name}")
+            # print(f"{self.player_name} is player2 in room {self.room_name}")
             await self.send(text_data=json.dumps({
                 'type': 'assign_role',
                 'role': 'player2'
@@ -203,9 +223,24 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.start_game()
 
     async def disconnect(self, close_code):
-        print(f"User {self.player_name} disconnected with code {close_code}")
+        # 플레이어를 방에서 제거
         await self.remove_user_from_room(self.room_name, self.player_name)
         await self.channel_layer.group_discard(self.room_name, self.channel_name)
+
+        # 게임 상태 초기화 (게임 종료 후 상태 삭제)
+        self.ball_position = {'x': 0, 'y': 0, 'z': 0}
+        self.ball_velocity = {'x': 0.01, 'y': 0, 'z': -0.02}
+        self.paddle_positions = {'player1': 0, 'player2': 0}
+        self.scores = {'player1': 0, 'player2': 0}
+
+        # 플레이어의 게임 상태를 false로 설정
+        await self.set_user_game_status(self.user, False)
+
+
+    @database_sync_to_async
+    def set_user_game_status(self, user, status):
+        user.is_in_game = status
+        user.save()
 
     async def receive(self, text_data):
         if not self.game_active:
@@ -215,7 +250,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         if data['type'] == 'move':
             direction = data['direction']
             player = data['player']
-            print(f"Received move command: {direction} for {player}")
+            # print(data)
 
             # 패들 움직임 범위 제한 및 위치 업데이트
             if player == 'player1':
@@ -227,6 +262,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def start_game(self):
         print(f"Starting game loop in room {self.room_name}")
+
+        self.ball_position = {'x': 0, 'y': 0, 'z': 0}
+        self.ball_velocity = {'x': 0.01, 'y': 0, 'z': -0.02}
+        self.paddle_positions = {'player1': 0, 'player2': 0}
+        self.scores = {'player1': 0, 'player2': 0}  # 점수 초기화
+        self.game_active = True  # 게임 활성화 상태로 설정
+
         asyncio.create_task(self.game_loop())
 
     async def game_loop(self):
@@ -234,7 +276,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             while self.game_active:
                 await self.update_ball_position()
                 await self.send_game_state()
-                await asyncio.sleep(0.02)  # 게임 속도 조절
+                await asyncio.sleep(0.04)  # 게임 속도 조절
         except Exception as e:
             print(f"Error in game_loop: {e}")
             await self.close()
@@ -337,7 +379,23 @@ class GameConsumer(AsyncWebsocketConsumer):
             }
         )
 
+        # 게임 상태 초기화
+        self.ball_position = {'x': 0, 'y': 0, 'z': 0}
+        self.ball_velocity = {'x': 0.01, 'y': 0, 'z': random.choice([-0.02, 0.02])}
+        self.paddle_positions = {'player1': 0, 'player2': 0}
+        self.scores = {'player1': 0, 'player2': 0}
+
+        # 플레이어를 방에서 제거
+        await self.remove_user_from_room(self.room_name, self.players['player1'])
+        await self.remove_user_from_room(self.room_name, self.players['player2'])
+
+        # 연결을 끊기 전에 일정 시간 대기 (예: 2초)
+        await asyncio.sleep(2)
+
         await self.save_game_results(winner)
+
+        # WebSocket 연결 종료
+        await self.close()
 
 
     @database_sync_to_async
@@ -422,6 +480,11 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.redis_client.srem(f"group_{room_name}", nickname)
         except Exception as e:
             print(f"Error in remove_user_from_room: {e}")
+
+
+
+
+
 
 from .game import PingPongGame
 class OfflineConsumer(AsyncWebsocketConsumer):
@@ -524,5 +587,6 @@ class OfflineConsumer(AsyncWebsocketConsumer):
         }))
         self.game.player1_score = 0
         self.game.player2_score = 0
+
 
 

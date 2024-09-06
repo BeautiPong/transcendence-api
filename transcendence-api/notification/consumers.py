@@ -30,9 +30,9 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         user = self.scope['user']
         if user.is_authenticated:
             await self.set_user_active_status(user, False)
-        if self.waiting_room:
-            await self.channel_layer.group_discard(self.waiting_room, self.channel_name)
-            await self.redis_client.srem(self.waiting_room, user.nickname.encode())
+        # if self.waiting_room:
+        #     await self.channel_layer.group_discard(self.waiting_room, self.channel_name)
+        #     await self.redis_client.srem(self.waiting_room, user.nickname.encode())
 
     @database_sync_to_async
     def get_notifications(self, user):
@@ -122,3 +122,4 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             'room_name': room_name,
             'message': message
         }))
+
