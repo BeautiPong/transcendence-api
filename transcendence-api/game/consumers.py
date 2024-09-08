@@ -191,7 +191,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.paddle_positions = {'player1': 0, 'player2': 0}
         self.scores = {'player1': 0, 'player2': 0}
         self.game_active = True  # 게임이 활성 상태인지 추적
-
         # 플레이어를 방에 추가
         await self.add_user_to_room(self.room_name, self.player_name)
         players_in_room = await self.check_room_capacity(self.room_name)
@@ -226,7 +225,6 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         # 플레이어를 방에서 제거
         if self.game_active:
-            print("testest")
             if self.player_name == self.players['player1']:
                 self.scores['player1'] = 0
                 self.scores['player2'] = 5
@@ -246,6 +244,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.scores = {'player1': 0, 'player2': 0}
 
         # 플레이어의 게임 상태를 false로 설정
+        self.game_active = False
         await self.set_user_game_status(self.user, False)
 
 
@@ -377,6 +376,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def end_game(self, winner):
         # player1과 player2의 닉네임과 점수를 함께 보냅니다.
+        self.game_active = False
         await self.channel_layer.group_send(
             self.room_name,
             {
