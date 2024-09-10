@@ -5,6 +5,7 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 
+from friend.models import Friend
 from scoreHistory.models import ScoreHistory
 from users.models import CustomUser
 from .models import Game
@@ -190,7 +191,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.paddle_positions = {'player1': 0, 'player2': 0}
         self.scores = {'player1': 0, 'player2': 0}
         self.game_active = True  # 게임이 활성 상태인지 추적
-
         # 플레이어를 방에 추가
         await self.add_user_to_room(self.room_name, self.player_name)
         players_in_room = await self.check_room_capacity(self.room_name)
@@ -224,6 +224,16 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         # 플레이어를 방에서 제거
+        if self.game_active:
+            if self.player_name == self.players['player1']:
+                self.scores['player1'] = 0
+                self.scores['player2'] = 5
+                await self.end_game(winner=self.players['player2'])
+            else:
+                self.scores['player1'] = 5
+                self.scores['player2'] = 0
+                await self.end_game(winner=self.players['player1'])
+
         await self.remove_user_from_room(self.room_name, self.player_name)
         await self.channel_layer.group_discard(self.room_name, self.channel_name)
 
@@ -234,6 +244,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.scores = {'player1': 0, 'player2': 0}
 
         # 플레이어의 게임 상태를 false로 설정
+        self.game_active = False
         await self.set_user_game_status(self.user, False)
 
 
@@ -261,7 +272,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.send_game_state()
 
     async def start_game(self):
-        print(f"Starting game loop in room {self.room_name}")
 
         self.ball_position = {'x': 0, 'y': 0, 'z': 0}
         self.ball_velocity = {'x': 0.01, 'y': 0, 'z': -0.02}
@@ -276,7 +286,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             while self.game_active:
                 await self.update_ball_position()
                 await self.send_game_state()
-                await asyncio.sleep(0.04)  # 게임 속도 조절
+                await asyncio.sleep(0.01)  # 게임 속도 조절
         except Exception as e:
             print(f"Error in game_loop: {e}")
             await self.close()
@@ -365,9 +375,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         }))
 
     async def end_game(self, winner):
-        self.game_active = False  # 게임을 비활성화하여 루프 중지
-
         # player1과 player2의 닉네임과 점수를 함께 보냅니다.
+        self.game_active = False
         await self.channel_layer.group_send(
             self.room_name,
             {
@@ -427,10 +436,26 @@ class GameConsumer(AsyncWebsocketConsumer):
                 user1.win_cnt += 1
                 user1.score += 20
                 user2.score -= 20
+                friend = Friend.objects.filter(user1=user1, user2=user2, status=Friend.Status.ACCEPT).first()
+                if friend:
+                    friend.user1_victory_num += 1
+                    friend.save()
+                friend = Friend.objects.filter(user1=user2, user2=user1, status=Friend.Status.ACCEPT).first()
+                if friend:
+                    friend.user2_victory_num += 1
+                    friend.save()
             else:
                 user2.win_cnt += 1
                 user2.score += 20
                 user1.score -= 20
+                friend = Friend.objects.filter(user1=user2, user2=user1, status=Friend.Status.ACCEPT).first()
+                if friend:
+                    friend.user1_victory_num += 1
+                    friend.save()
+                friend = Friend.objects.filter(user1=user1, user2=user2, status=Friend.Status.ACCEPT).first()
+                if friend:
+                    friend.user2_victory_num += 1
+                    friend.save()
 
             user1.match_cnt += 1
             user2.match_cnt += 1
@@ -446,7 +471,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             score_history2 = ScoreHistory(user=user2, score=user2.score)
             score_history2.save()
 
-            print("Game results saved successfully")
         except CustomUser.DoesNotExist:
             print("User not found.")
         except Exception as e:
@@ -454,6 +478,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 
     async def game_over(self, event):
+        self.game_active = False  # 게임 비활성화
         winner = event['winner']
         scores = event['scores']
         player1 = event['player1']
@@ -467,6 +492,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             'player1': player1,
             'player2': player2
         }))
+
 
 
     async def check_room_capacity(self, room_name):
