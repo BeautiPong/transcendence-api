@@ -251,23 +251,43 @@ class SearchFriend(APIView) :
         except CustomUser.DoesNotExist:
             raise NotFound(detail="Friend does not exist.", code=status.HTTP_404_NOT_FOUND)
         
+    # 차단된 친구 조회
+    class GetBlockFriendList(APIView) :
+        permission_classes = [IsAuthenticated]
+        authentication_classes = [JWTAuthentication]
 
-# 아직 읽지 않은 친구 요청 반환
-class PendFriendRequest(APIView) :
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+        def get(self, request) :
+            # user1이 나고, status가 BL 인 친구 리스트 뽑아오기
 
-    def get(self, request) :
+            user = request.user
+            blocked_friends = Friend.objects.filter(user1=user, status='BL')
 
-        user = request.user
+            friend_list = [friend.user2 for friend in blocked_friends]
 
-        pendRequestFriends = Friend.objects.filter(user1=user, status='PN')
-        friend_list = [friend.user2 for friend in pendRequestFriends]
+            friend_info_list = [ ]
+            for friend in friend_list :
+                friend_info_list.append(get_user_info(friend.nickname))
+            friend_info_list_sorted = sorted(friend_info_list, key=lambda user_info: user_info["nickname"])
 
-        friend_info_list = [ ]
-        for friend in friend_list :
-            friend_info_list.append(get_user_info(friend.nickname))
-        friend_info_list_sorted = sorted(friend_info_list, key=lambda user_info: user_info["nickname"])
+            friend_info_serializer = UserInfoSerializer(friend_info_list_sorted, many=True)
+            return Response({'friends':friend_info_serializer.data}, status=status.HTTP_200_OK)
+    
+    # 아직 읽지 않은 친구 요청 반환
+    class PendFriendRequest(APIView) :
+        permission_classes = [IsAuthenticated]
+        authentication_classes = [JWTAuthentication]
 
-        friend_info_serializer = UserInfoSerializer(friend_info_list_sorted, many=True)
-        return Response({'friends':friend_info_serializer.data}, status=status.HTTP_200_OK)
+        def get(self, request) :
+
+            user = request.user
+
+            pendRequestFriends = Friend.objects.filter(user1=user, status='PN')
+            friend_list = [friend.user2 for friend in pendRequestFriends]
+
+            friend_info_list = [ ]
+            for friend in friend_list :
+                friend_info_list.append(get_user_info(friend.nickname))
+            friend_info_list_sorted = sorted(friend_info_list, key=lambda user_info: user_info["nickname"])
+
+            friend_info_serializer = UserInfoSerializer(friend_info_list_sorted, many=True)
+            return Response({'friends':friend_info_serializer.data}, status=status.HTTP_200_OK)
