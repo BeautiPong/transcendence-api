@@ -10,4 +10,5 @@ urlpatterns = [
     path('delete/<str:friend_nickname>/', DeleteFriend.as_view(), name='delete_friend'),  #친구삭제
     path('search/<str:friend_nickname>/', SearchFriend.as_view(), name='search_friend'), #친구 검색_조회
     # path('test/', AddFriendsV2.as_view(),name='test'),
+    path('pend/', PendFriendRequest.as_view(), name='pend_friend'), #아직 읽지 않은 친구 요청 확인
 ]
