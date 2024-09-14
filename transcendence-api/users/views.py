@@ -290,11 +290,21 @@ class UserInfoView(APIView):
     authentication_classes = [JWTAuthentication]
 
     def get(self, request, nickname):
-        user_data = get_user_info(nickname)
-        if user_data is None:
+        try:
+            user = CustomUser.objects.get(nickname=nickname)
+        except CustomUser.DoesNotExist:
             return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        return Response(user_data, status=status.HTTP_200_OK)
+        serializer = UserInfoSerializer(user, context={'request': request})
+        
+        # 승률 계산
+        win_rate = user.win_cnt / user.match_cnt * 100 if user.match_cnt != 0 else 0
+        
+        # 직렬화된 데이터와 승률 포함
+        response_data = serializer.data
+        response_data['win_rate'] = win_rate
+
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 class UserRankingView(APIView):
