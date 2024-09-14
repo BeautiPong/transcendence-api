@@ -13,6 +13,11 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+CORS_ALLOWED_ORIGINS = [
+    "https://localhost",
+]
+
+
 INSTALLED_APPS = [
     'daphne',
     'django.contrib.admin',
@@ -154,11 +159,3 @@ CHANNEL_LAYERS = {
         },
     },
 }
-
-CORS_ORIGIN_WHITELIST = (
-    "http://localhost:8080",
-    "http://localhost:5500",
-    "http://127.0.0.1:5500",
-    "http://localhost:81",
-    "http://127.0.0.1:81",
-)
