@@ -530,6 +530,7 @@ class OfflineConsumer(AsyncWebsocketConsumer):
         self.user = self.scope['user']
         self.player_count = 0
         self.winner = ''
+        self.wait = True
         self.count_player()
         print("local connect")
         print("user =", self.user)
@@ -549,11 +550,19 @@ class OfflineConsumer(AsyncWebsocketConsumer):
         if(self.player_count == 4):
             winner1 = self.winner
             print(self.winner)
+            #대기1
+            while(self.wait):
+                await asyncio.sleep(0.3)
+            self.wait = True
             task2 = asyncio.create_task(self.game_loop(self.user3, self.user4))
             await task2
             winner2 = self.winner
             print(self.winner)
             print("winner1 = ", winner1, "winner2 = ", winner2)
+            #대기2
+            while(self.wait):
+                await asyncio.sleep(0.3)
+            self.wait = True
             task3 = asyncio.create_task(self.game_loop(winner1, winner2))
             await task3
 
@@ -586,6 +595,9 @@ class OfflineConsumer(AsyncWebsocketConsumer):
             # 모든 클라이언트에게 게임 상태를 전송 (broadcast)
             await self.send(text_data=json.dumps(game_state))
 
+        elif 'type' in data:
+            if data['type'] == 'game_end_ack':
+                self.wait = False
 
     async def game_loop(self,user1, user2):
         self.game = PingPongGame(100,50,10, user1, user2)
