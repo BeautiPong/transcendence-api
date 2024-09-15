@@ -8,4 +8,4 @@ class ScoreHistorySerializer(serializers.ModelSerializer):
 
 class OverallRankingSerializer(serializers.Serializer):
     nickname = serializers.CharField(max_length=30)
-    rank = serializers.IntegerField()
+    rank = serializers.IntegerField(allow_null=True)
