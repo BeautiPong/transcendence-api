@@ -11,22 +11,19 @@ from friend.views import get_my_friends_request
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        if self.accepted:
-            return
-
         user = self.scope['user']
 
         if user.is_authenticated:
             await self.set_user_active_status(user, True)
             self.nickname = user.nickname
             self.group_name = f"user_{self.nickname}"
-            is_member = await self.redis_client.sismember(self.group_name, self.channel_name)
-            if not is_member:
-                await self.channel_layer.group_add(self.group_name, self.channel_name)
-                await self.accept()
+            print("connect!! group_name:", self.group_name)
 
-                # 비동기 컨텍스트에서 Django ORM 호출
-                await self.send_notifications(user)
+            await self.channel_layer.group_add(self.group_name, self.channel_name)
+            await self.accept()
+
+            # 비동기 컨텍스트에서 Django ORM 호출
+            await self.send_notifications(user)
         else:
             await self.close()
 
@@ -34,6 +31,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         user = self.scope['user']
         if user.is_authenticated:
             await self.set_user_active_status(user, False)
+            await self.channel_layer.group_discard(self.group_name, self.channel_name)
         # if self.waiting_room:
         #     await self.channel_layer.group_discard(self.waiting_room, self.channel_name)
         #     await self.redis_client.srem(self.waiting_room, user.nickname.encode())
@@ -62,7 +60,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                     "message": message,
                     }
                 )
-                #위에 꺼 추가하니까 메시지 두번 간다. 아 아닌가
 
     async def invite_game(self, event):
         sender = event["sender"]
