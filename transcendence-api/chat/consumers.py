@@ -24,7 +24,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_add(self.room_group_name, self.channel_name)
             await self.accept()
 
-            #이거 await해야하나? 
             await self.set_connect_status(user)
 
         else:
@@ -42,7 +41,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 chattingroom.user2_is_in_chat_room = True
                 chattingroom.save()
                 sender = chattingroom.user1
-            
+
             # sender가 나에게 보낸 안읽은 message 전부 read상태로 바꾸기.
             messages = Message.objects.filter(room=chattingroom, sender=sender, read_status='no_read').all()
             for message in messages:
@@ -82,15 +81,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # 그룹한테 메시지 보내기
         await self.channel_layer.group_send( # 이거 어디서 확인가능? chat_message에서 맞나?
             self.room_group_name, {
-                "type": "chat.message", 
+                "type": "chat.message",
                 "message": message,
                 "sender" : sender,
             }
         )
-    
+
     @database_sync_to_async
     def save_message(self, room_name, sender, message):
-        
+
         room = ChattingRoom.objects.filter(name=room_name).first()
         user = CustomUser.objects.filter(nickname=sender).first()
 
@@ -105,14 +104,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if(room.user1.nickname == sender):
             if room.user2_is_in_chat_room:
                 message.read_status = 'read'
-                message.save()        
+                message.save()
 
         else:
             if room.user1_is_in_chat_room:
                 message.read_status = 'read'
                 message.save()
 
-        
+
 
     # 그룹으로부터 메시지 받기
     async def chat_message(self, event):
@@ -140,4 +139,4 @@ class ChatConsumer(AsyncWebsocketConsumer):
         #             "message" : message
         #         }))
 
-    
+
