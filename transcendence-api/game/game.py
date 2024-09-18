@@ -8,16 +8,16 @@ class PingPongGame:
         # 패들의 x축 위치를 탁구대의 양 끝으로 고정
         self.player1_paddle_x = -self.table_width // 2 + self.paddle_width  # player1의 x축 위치 (탁구대의 왼쪽 끝 부분)
         self.player2_paddle_x = self.table_width // 2 - self.paddle_width  # player2의 x축 위치 (탁구대의 오른쪽 끝 부분)
-        
+
         # 공의 초기 위치와 방향
         # self.ball_pos = [self.table_width // 2, self.table_length // 2]  # 공의 x, z 좌표
         self.ball_pos = [0, 0]
         self.ball_dir = [1, 1]  # x축과 z축으로 공이 이동하는 방향
-        
+
         # 패들의 초기 위치 (z축만 사용)
         self.player1_paddle_z = 0  # player1 패들의 초기 z 위치
         self.player2_paddle_z = 0  # player2 패들의 초기 z 위치
-        
+
         # 점수 초기화
         self.player1_score = 0
         self.player2_score = 0
@@ -28,19 +28,19 @@ class PingPongGame:
         :param key: 'w', 's', 'o', 'l' 중 하나로, 각 키에 따라 패들의 이동 방향을 지정합니다.
         """
         # print("key: ", key)
-        if key == 'w':
+        if key == 'KeyW':
             # player1의 패들을 위로 이동 (z축 양의 방향)
             if self.player1_paddle_z > -self.table_length // 2 + self.paddle_width // 2:
                 self.player1_paddle_z -= 1
-        elif key == 's':
+        elif key == 'KeyS':
             # player1의 패들을 아래로 이동 (z축 음의 방향)
             if self.player1_paddle_z < self.table_length // 2 - self.paddle_width // 2:
                 self.player1_paddle_z += 1
-        elif key == 'o':
+        elif key == 'KeyO':
             # player2의 패들을 위로 이동 (z축 양의 방향)
             if self.player2_paddle_z > -self.table_length // 2 + self.paddle_width // 2:
                 self.player2_paddle_z -= 1
-        elif key == 'l':
+        elif key == 'KeyL':
             # player2의 패들을 아래로 이동 (z축 음의 방향)
             if self.player2_paddle_z < self.table_length // 2 - self.paddle_width // 2:
                 self.player2_paddle_z += 1
@@ -49,11 +49,11 @@ class PingPongGame:
         # 공은 x축과 z축으로만 이동
         self.ball_pos[0] += self.ball_dir[0]  # x축으로 공 이동
         self.ball_pos[1] += self.ball_dir[1]  # z축으로 공 이동
-        
+
         # z축 경계에 부딪히면 방향 반전
         if self.ball_pos[1] <= -self.table_length // 2 or self.ball_pos[1] >= self.table_length // 2:
             self.ball_dir[1] *= -1
-        
+
         # player1 패들 충돌 검사 (x축 왼쪽 끝 부분)
         if self.ball_pos[0] <= self.player1_paddle_x:
             if self.ball_pos[1] >= self.player1_paddle_z - self.paddle_width // 2 and self.ball_pos[1] <= self.player1_paddle_z + self.paddle_width // 2:

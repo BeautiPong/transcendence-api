@@ -176,17 +176,17 @@ class OfflineGameView(APIView):
         user3 = request.data.get('user3')
         user4 = request.data.get('user4')
 
-        if user3 is None or user4 is None:
-            match_type = '1v1'
-        else:
-            match_type = 'tournament'
+        # if user3 is None or user4 is None:
+        #     match_type = '1v1'
+        # else:
+        #     match_type = 'tournament'
 
         data = {
             'user1': user1,
             'user2': user2,
             'user3': user3,
             'user4': user4,
-            'match_type': match_type,
+            # 'match_type': match_type,
         }
         return JsonResponse(data, status=status.HTTP_200_OK)
 
