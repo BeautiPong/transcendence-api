@@ -23,6 +23,7 @@ import re
 import json
 from users.utils import get_user_info
 from datetime import timedelta
+from .utils import save_image_from_url
 
 # Create your views here.
 
@@ -62,18 +63,21 @@ def get_token(request):
     else:
         return JsonResponse({'error': 'Failed to obtain access token'}, status=response.status_code)
 
+    # 사용자 정보 요청
     user_url = 'https://api.intra.42.fr/v2/me'
-    headers = {
-        'Authorization': f'Bearer {ft_access_token}',
-    }
+    headers = {'Authorization': f'Bearer {ft_access_token}'}
     user_response = requests.get(user_url, headers=headers)
     response_data = user_response.json()
+
+    # 사용자 정보 추출
     intra_id = response_data.get('login')
     email = response_data.get('email')
-    image = response_data.get('image.list')
+    image_url = response_data.get('image', {}).get('link')
 
     user = CustomUser.objects.filter(oauthID=intra_id).first()
+
     if user:
+        # 기존 유저가 있는 경우
         message = "로그인 성공."
         token = TokenObtainPairSerializer.get_token(user)  # refresh token 생성
         refresh_token = str(token)
@@ -84,10 +88,17 @@ def get_token(request):
             "refresh_token": refresh_token
         }
     else:
-        user = CustomUser.objects.create_ft_user(oauthID=intra_id, email=email, image=image)
+        # 새로운 유저 생성
+        if image_url:
+            image_file = save_image_from_url(image_url)
+        else:
+            image_file = None  # 이미지가 없으면 None 처리
+
+        user = CustomUser.objects.create_ft_user(oauthID=intra_id, email=email, image=image_file)
+
         message = "42user 회원가입 성공!"
-        temp_token = AccessToken.for_user(user) # temp token 생성
-        temp_token.set_exp(lifetime=timedelta(minutes=5))  # 토큰 유효 기간을 10분으로 설정
+        temp_token = AccessToken.for_user(user)  # temp token 생성
+        temp_token.set_exp(lifetime=timedelta(minutes=5))  # 토큰 유효 기간을 5분으로 설정
         response_data = {
             "message": message,
             "temp_token": str(temp_token)
@@ -147,13 +158,13 @@ def join (request) :
     user = CustomUser.objects.filter(nickname=nickname).first()
     if user :
         return JsonResponse({"message": "이미 존재하는 닉네임입니다."},
-            status = status.HTTP_400_BAD_REQUEST)
-    
+                            status = status.HTTP_400_BAD_REQUEST)
+
     user = CustomUser.objects.filter(email=email).first()
     if user :
         return JsonResponse({"message": "이미 존재하는 이메일입니다."},
-            status = status.HTTP_400_BAD_REQUEST)
-    
+                            status = status.HTTP_400_BAD_REQUEST)
+
     try:
         validator = CustomPasswordValidator()
         validator.validate(password=password)
@@ -165,12 +176,12 @@ def join (request) :
     user = CustomUser.objects.filter(userID=userID).first()
     if user :
         return JsonResponse({"message": "이미 가입 된 회원입니다."},
-            status = status.HTTP_202_ACCEPTED)
+                            status = status.HTTP_202_ACCEPTED)
     else :
         # 사용자 생성 후 DB에 저장
         CustomUser.objects.create_user(userID=userID, password=password,nickname=nickname, email=email)
         return JsonResponse({"message": "회원가입 성공!"},
-            status = status.HTTP_200_OK)
+                            status = status.HTTP_200_OK)
 
 #아이디비번 확인
 @csrf_exempt
@@ -242,7 +253,7 @@ def login (request) :
 class LogoutView(APIView) :
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
-    
+
     def post(self, request) :
         data = json.loads(request.body)
         refresh_token = data.get('refresh_token')
@@ -250,7 +261,7 @@ class LogoutView(APIView) :
         token.blacklist()
 
         return JsonResponse({"message": "로그아웃 성공!"},
-            status = status.HTTP_200_OK)
+                            status = status.HTTP_200_OK)
 
 
 # 사용자 정보 반환
