@@ -120,8 +120,15 @@ class MatchingView(APIView):
     authentication_classes = [JWTAuthentication]
 
     def post(self, request):
-        waiting_room = request.data.get('waiting_room')
-        room_name = request.data.get('room_name')
+        waiting_room = None
+        room_name = None
+        myNickname = request.data.get('myNickname')
+        friendNickname = request.data.get('friendNickname')
+        if(myNickname and friendNickname):
+            sorted_names = sorted([myNickname, friendNickname])
+            waiting_room = f'{myNickname}_waitingRoom'
+            room_name = f'{sorted_names[0]}_{sorted_names[1]}_gameRoom'
+
         user = request.user
 
         if room_name:

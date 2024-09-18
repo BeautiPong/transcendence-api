@@ -178,7 +178,9 @@ class GameConsumer(AsyncWebsocketConsumer):
                 self.close()
                 return
         # room_name을 '_'로 분리하여 두 플레이어의 닉네임을 가져옵니다.
-        _, name1, name2 = self.room_name.split('_')
+        splited_room_name = self.room_name.split('_')
+        name1 = splited_room_name[0]
+        name2 = splited_room_name[1]
 
         await self.channel_layer.group_add(self.room_name, self.channel_name)
         await self.accept()
