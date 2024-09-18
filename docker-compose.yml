@@ -1,4 +1,16 @@
 services:
+  frontend:
+    container_name: nginx
+    build: ../front
+    ports:
+      - "81:80"
+      - "443:443"
+    restart: always
+    volumes:
+      - ../front:/usr/share/nginx/html
+    depends_on:
+      - backend
+
   db:
     image: postgres:15
     restart: always
@@ -7,15 +19,14 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      #      - ./data/postgresql:/var/lib/postgresql/data
       - ./dump.sql:/docker-entrypoint-initdb.d/dump.sql
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "$POSTGRES_USER", "-d", "$POSTGRES_DB"]
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  web:
+  backend:
     build: .
     restart: always
     container_name: transcendence
