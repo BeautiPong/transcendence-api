@@ -7,11 +7,12 @@ class UserInfoSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['nickname', 'image', 'match_cnt', 'win_cnt', 'score', 'is_active']
 
-    def get_image_url(self, obj):
-        request = self.context.get('request')
-        if obj.image and hasattr(obj.image, 'url'):
-            return request.build_absolute_uri(obj.image.url)
-        return None
+        def get_image_url(self, obj):
+            request = self.context.get('request')
+            if obj.image and hasattr(obj.image, 'url'):
+                url = request.build_absolute_uri(obj.image.url)
+                return url
+            return None
 
     def update(self, instance, validated_data):
         nickname = validated_data.get('nickname', instance.nickname)

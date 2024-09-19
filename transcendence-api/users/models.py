@@ -11,11 +11,11 @@ class CustomUserManager(BaseUserManager):
         user.set_password(password)
         user.save(using=self._db)
         return user
-    
-    def create_ft_user(self, oauthID, email, image, **extra_fields):
+
+    def create_ft_user(self, oauthID, email, image=None, **extra_fields):
         if not oauthID:
-            raise ValueError(_('The userId field must be set'))
-        user = self.model(oauthID=oauthID, email = email, image = image, **extra_fields)
+            raise ValueError(_('The oauthID field must be set'))
+        user = self.model(oauthID=oauthID, email=email, image=image, **extra_fields)
         user.save(using=self._db)
         return user
 
@@ -35,7 +35,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     userID = models.CharField(max_length=30, blank=True, null=True, unique=True)
     oauthID = models.CharField(max_length=30, blank=True, null=True)
     score = models.IntegerField(default=1000)
-    image = models.TextField(null=True, blank=True)
+    image = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_online = models.BooleanField(default=False)
     is_in_game = models.BooleanField(default=False)
