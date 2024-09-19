@@ -8,6 +8,7 @@ services:
     restart: always
     volumes:
       - ../front:/usr/share/nginx/html
+      - ./transcendence-api/media:/media
     depends_on:
       - backend
 
