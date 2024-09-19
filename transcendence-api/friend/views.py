@@ -92,10 +92,10 @@ class AddFriend(APIView) :
                     'message': f"{user.nickname} 님이 친구 요청을 보냈습니다!!",
                     'tag' : 'request'
                 }
-                )
+            )
 
         return Response({"message": "Friend request sent."}, status=status.HTTP_201_CREATED)
-    
+
 
 # 친구 수락
 class AcceptFriend(APIView) :
@@ -112,7 +112,7 @@ class AcceptFriend(APIView) :
         # 요청오지 않은 유저를 수락한 경우
         if (friend1 is None or friend2 is None) :
             raise ValidationError(detail="You haven't received a friend request from that friend", code=status.HTTP_400_BAD_REQUEST)
-        
+
         # 이미 수락한 경우
         if (friend1.status == "AC" or friend2.status == "AC") :
             raise ValidationError(detail="You already accept friend", code=status.HTTP_400_BAD_REQUEST)
@@ -250,7 +250,7 @@ class SearchFriend(APIView) :
 
         except CustomUser.DoesNotExist:
             raise NotFound(detail="Friend does not exist.", code=status.HTTP_404_NOT_FOUND)
-        
+
 # 차단된 친구 조회
 class GetBlockFriendList(APIView) :
     permission_classes = [IsAuthenticated]
@@ -271,7 +271,7 @@ class GetBlockFriendList(APIView) :
 
         friend_info_serializer = UserInfoSerializer(friend_info_list_sorted, many=True)
         return Response({'friends':friend_info_serializer.data}, status=status.HTTP_200_OK)
-    
+
 # 아직 읽지 않은 친구 요청 반환
 class PendFriendRequest(APIView) :
     permission_classes = [IsAuthenticated]

@@ -9,7 +9,6 @@ import friend.views
 import message.views
 from friend.views import get_my_friends_request
 
-
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         user = self.scope['user']
@@ -18,6 +17,8 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             await self.set_user_active_status(user, True)
             self.nickname = user.nickname
             self.group_name = f"user_{self.nickname}"
+            print("connect!! group_name:", self.group_name)
+
             await self.channel_layer.group_add(self.group_name, self.channel_name)
             await self.accept()
 
@@ -30,9 +31,45 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         user = self.scope['user']
         if user.is_authenticated:
             await self.set_user_active_status(user, False)
+            await self.channel_layer.group_discard(self.group_name, self.channel_name)
         # if self.waiting_room:
         #     await self.channel_layer.group_discard(self.waiting_room, self.channel_name)
         #     await self.redis_client.srem(self.waiting_room, user.nickname.encode())
+
+    async def receive(self, text_data):
+        try:
+            data = json.loads(text_data)
+            # print("Received data:", data)  # 서버에서 받은 데이터를 출력해 확인
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON: {e}")
+        data = json.loads(text_data)
+
+        if 'type' in data:
+            if data['type'] == 'invite_game':
+                sender = data.get('sender')  # 'sender' 필드를 추출
+                receiver = data.get('receiver')  # 'receiver' 필드를 추출
+                message = data.get('message')  # 'message' 필드를 추출
+
+                print("receiver:", receiver)
+
+                #일단 초대 알람 보내기
+                await self.channel_layer.group_send(
+                    f"user_{receiver}", {
+                    "type": "invite_game",
+                    "sender" : sender,
+                    "message": message,
+                    }
+                )
+
+    async def invite_game(self, event):
+        sender = event["sender"]
+        message = event["message"]
+
+        await self.send(text_data=json.dumps({
+            'type': 'invite_game',
+            'sender': sender,
+            'message': message
+        }))
 
     @database_sync_to_async
     def get_notifications(self, user):
