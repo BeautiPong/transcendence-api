@@ -5,6 +5,8 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 
+from django.db import transaction
+
 from friend.models import Friend
 from scoreHistory.models import ScoreHistory
 from users.models import CustomUser
@@ -61,11 +63,18 @@ class MatchingConsumer(AsyncWebsocketConsumer):
 
         await self.channel_layer.group_discard(f'user_game_{user.nickname}', self.channel_name)
 
-
     @database_sync_to_async
-    def set_user_game_status(self, user, status):
-        user.is_in_game = status
-        user.save()
+    def set_user_game_status(self, user, is_in_game):
+        try:
+            with transaction.atomic():
+                # 유저 상태를 select_for_update로 잠금
+                user = CustomUser.objects.select_for_update().get(id=user.id)
+                user.is_in_game = is_in_game
+                user.save()
+        except Exception as e:
+            print(f"Error updating user game status: {e}")
+
+
 
     async def check_room_capacity(self, room_name):
         # 방에 있는 사용자 수를 확인하기 위해 Redis의 set 크기를 확인
@@ -249,9 +258,16 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 
     @database_sync_to_async
-    def set_user_game_status(self, user, status):
-        user.is_in_game = status
-        user.save()
+    def set_user_game_status(self, user, is_in_game):
+        try:
+            with transaction.atomic():
+                # 유저 상태를 select_for_update로 잠금
+                user = CustomUser.objects.select_for_update().get(id=user.id)
+                user.is_in_game = is_in_game
+                user.save()
+        except Exception as e:
+            print(f"Error updating user game status: {e}")
+
 
     async def receive(self, text_data):
         if not self.game_active:
@@ -375,16 +391,29 @@ class GameConsumer(AsyncWebsocketConsumer):
         }))
 
     async def end_game(self, winner):
-        # player1과 player2의 닉네임과 점수를 함께 보냅니다.
+        # player1과 player2의 닉네임, 점수, 그리고 게임 점수를 함께 보냅니다.
         self.game_active = False
+
+        user1 = await database_sync_to_async(CustomUser.objects.get)(nickname=self.players['player1'])
+        user2 = await database_sync_to_async(CustomUser.objects.get)(nickname=self.players['player2'])
+
+        if winner == 'player1':
+            player1_score = user1.score + 20
+            player2_score = user2.score - 20
+        else:
+            player1_score = user1.score - 20
+            player2_score = user2.score + 20
+
         await self.channel_layer.group_send(
             self.room_name,
             {
                 'type': 'game_over',
-                'winner': winner,  # 이긴 플레이어의 닉네임
-                'scores': self.scores,  # 점수 정보
-                'player1': self.players['player1'],  # player1의 닉네임
-                'player2': self.players['player2']   # player2의 닉네임
+                'winner': winner,
+                'scores': self.scores,
+                'player1': self.players['player1'],
+                'player1_score': player1_score,
+                'player2': self.players['player2'],
+                'player2_score': player2_score,
             }
         )
 
@@ -410,87 +439,74 @@ class GameConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def save_game_results(self, winner):
         try:
-            # 게임에 참여한 사용자 객체 가져오기
-            user1 = CustomUser.objects.get(nickname=self.players['player1'])
-            user2 = CustomUser.objects.get(nickname=self.players['player2'])
+            with transaction.atomic():  # 트랜잭션 시작
+                user1 = CustomUser.objects.select_for_update().get(nickname=self.players['player1'])
+                user2 = CustomUser.objects.select_for_update().get(nickname=self.players['player2'])
 
-            # 게임 결과 저장
-            game1 = Game(
-                user1=user1,
-                user2=user2,
-                user1_score=self.scores['player1'],
-                user2_score=self.scores['player2']
-            )
-            game1.save()
+                # 게임 결과 저장
+                game1 = Game(
+                    user1=user1,
+                    user2=user2,
+                    user1_score=self.scores['player1'],
+                    user2_score=self.scores['player2']
+                )
+                game1.save()
 
-            game2 = Game(
-                user1=user2,
-                user2=user1,
-                user1_score=self.scores['player2'],
-                user2_score=self.scores['player1']
-            )
-            game2.save()
+                game2 = Game(
+                    user1=user2,
+                    user2=user1,
+                    user1_score=self.scores['player2'],
+                    user2_score=self.scores['player1']
+                )
+                game2.save()
 
-            # 승리한 플레이어 및 점수 계산
-            if winner == user1.nickname:
-                user1.win_cnt += 1
-                user1.score += 20
-                user2.score -= 20
-                friend = Friend.objects.filter(user1=user1, user2=user2, status=Friend.Status.ACCEPT).first()
-                if friend:
-                    friend.user1_victory_num += 1
-                    friend.save()
-                friend = Friend.objects.filter(user1=user2, user2=user1, status=Friend.Status.ACCEPT).first()
-                if friend:
-                    friend.user2_victory_num += 1
-                    friend.save()
-            else:
-                user2.win_cnt += 1
-                user2.score += 20
-                user1.score -= 20
-                friend = Friend.objects.filter(user1=user2, user2=user1, status=Friend.Status.ACCEPT).first()
-                if friend:
-                    friend.user1_victory_num += 1
-                    friend.save()
-                friend = Friend.objects.filter(user1=user1, user2=user2, status=Friend.Status.ACCEPT).first()
-                if friend:
-                    friend.user2_victory_num += 1
-                    friend.save()
+                # 승리한 플레이어 및 점수 계산
+                if winner == user1.nickname:
+                    user1.win_cnt += 1
+                    user1.score += 20
+                    user2.score -= 20
+                else:
+                    user2.win_cnt += 1
+                    user2.score += 20
+                    user1.score -= 20
 
-            user1.match_cnt += 1
-            user2.match_cnt += 1
+                # 매칭 수 업데이트
+                user1.match_cnt += 1
+                user2.match_cnt += 1
 
-            # 사용자 데이터베이스 업데이트
-            user1.save()
-            user2.save()
+                # 사용자 데이터베이스 업데이트
+                user1.save()
+                user2.save()
 
-            # ScoreHistory 생성 및 저장
-            score_history1 = ScoreHistory(user=user1, score=user1.score)
-            score_history1.save()
+                # ScoreHistory 생성 및 저장
+                score_history1 = ScoreHistory(user=user1, score=user1.score)
+                score_history1.save()
 
-            score_history2 = ScoreHistory(user=user2, score=user2.score)
-            score_history2.save()
+                score_history2 = ScoreHistory(user=user2, score=user2.score)
+                score_history2.save()
 
         except CustomUser.DoesNotExist:
             print("User not found.")
         except Exception as e:
             print(f"Error saving game results: {e}")
 
-
     async def game_over(self, event):
-        self.game_active = False  # 게임 비활성화
+        self.game_active = False
         winner = event['winner']
         scores = event['scores']
         player1 = event['player1']
+        player1_score = event['player1_score']
         player2 = event['player2']
+        player2_score = event['player2_score']
 
-        # 클라이언트에 승자, 점수, 플레이어 닉네임 정보를 전달합니다.
         await self.send(text_data=json.dumps({
             'type': 'game_over',
             'winner': winner,
             'scores': scores,
             'player1': player1,
-            'player2': player2
+            'player1_score': player1_score,
+            'player2': player2,
+            'player2_score': player2_score
         }))
 
 
