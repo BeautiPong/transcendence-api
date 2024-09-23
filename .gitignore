@@ -12,4 +12,4 @@ venv/
 .idea/
 data/
 .env
-.jpg
+*.jpg

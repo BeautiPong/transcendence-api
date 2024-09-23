@@ -16,6 +16,7 @@ ALLOWED_HOSTS = ['*']
 CORS_ALLOWED_ORIGINS = [
     "https://localhost",
     "http://localhost",
+    os.environ.get("SERVER_IP"),
 ]
 
 
