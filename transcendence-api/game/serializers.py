@@ -41,10 +41,14 @@ class GameSerializer(serializers.ModelSerializer):
         return obj.user1.nickname
 
     def get_user1_image(self, obj):
-        return obj.user1.image
+        if obj.user1.image:
+            return obj.user1.image.url  # 이미지 URL 반환
+        return None
 
     def get_user2_nickname(self, obj):
         return obj.user2.nickname
 
     def get_user2_image(self, obj):
-        return obj.user2.image
+        if obj.user2.image:
+            return obj.user2.image.url  # 이미지 URL 반환
+        return None
