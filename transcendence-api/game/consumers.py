@@ -30,8 +30,10 @@ class MatchingConsumer(AsyncWebsocketConsumer):
                 await self.redis_client.lpush(self.matchmaking_queue_key, self.user.nickname)
                 await self.match_users()
             else:
+                print("self.user.nickname in matchingconsumer: ",self.user.nickname)
                 await self.add_user_to_room(self.room_name, self.user.nickname)
                 players_in_room = await self.check_room_capacity(self.room_name)
+                print("players_in_room: ",players_in_room)
                 if players_in_room > 2:
                     await self.close()
                     return
@@ -73,7 +75,10 @@ class MatchingConsumer(AsyncWebsocketConsumer):
 
     async def add_user_to_room(self, room_name, nickname):
         # 사용자를 방에 추가 (Redis set 사용)
+        # asyncio.sleep(1)
         await self.redis_client.sadd(f"group_{room_name}", nickname)
+        print("self.redis_client.sadd : ", f"group_{room_name}", nickname)
+        print("players num : ",await self.check_room_capacity(self.room_name))
 
     async def remove_user_from_room(self, room_name, nickname):
         # 사용자를 방에서 제거 (Redis set 사용)
@@ -501,6 +506,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         return await self.redis_client.scard(f"group_{room_name}")
 
     async def add_user_to_room(self, room_name, nickname):
+        print("add_user_to_room2")
         await self.redis_client.sadd(f"group_{room_name}", nickname)
 
     async def remove_user_from_room(self, room_name, nickname):

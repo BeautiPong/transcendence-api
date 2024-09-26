@@ -17,7 +17,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             await self.set_user_active_status(user, True)
             self.nickname = user.nickname
             self.group_name = f"user_{self.nickname}"
-            print("connect!! group_name:", self.group_name)
 
             await self.channel_layer.group_add(self.group_name, self.channel_name)
             await self.accept()
@@ -61,6 +60,21 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                     "message": message,
                     }
                 )
+            
+            elif data['type'] == 'access_invitation':
+                print("access_invitation")
+                sender = data.get('sender')  # 'sender' 필드를 추출
+                receiver = data.get('receiver')  # 'receiver' 필드를 추출
+                message = data.get('message')  # 'message' 필드를 추출
+
+                await self.channel_layer.group_send(
+                    f"user_{receiver}", {
+                    "type": "access_invitation",
+                    "sender" : sender,
+                    "receiver" : receiver,
+                    "message": message,
+                    }
+                )
 
     async def invite_game(self, event):
         sender = event["sender"]
@@ -69,6 +83,18 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
         await self.send(text_data=json.dumps({
             'type': 'invite_game',
+            'sender': sender,
+            "receiver" : receiver,
+            'message': message
+        }))
+
+    async def access_invitation(self, event):
+        sender = event["sender"]
+        message = event["message"]
+        receiver = event['receiver']
+
+        await self.send(text_data=json.dumps({
+            'type': 'access_invitation',
             'sender': sender,
             "receiver" : receiver,
             'message': message
