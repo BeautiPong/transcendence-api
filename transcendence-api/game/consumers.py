@@ -184,6 +184,11 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.player_name = self.user.nickname
         self.connection_open = True
+        self.table_depth = 4.5
+        self.table_width = 3.5
+        self.paddle_width = 0.5
+        self.borderThickness = 0.02
+
 
         if self.user.is_authenticated:
             if self.user.is_in_game:
@@ -282,11 +287,10 @@ class GameConsumer(AsyncWebsocketConsumer):
             player = data['player']
             # print(data)
 
-            # 패들 움직임 범위 제한 및 위치 업데이트
             if player == 'player1':
-                self.paddle_positions['player1'] = max(-0.75, min(0.75, self.paddle_positions['player1'] + (-0.05 if direction == 'right' else 0.05)))
+                self.paddle_positions['player1'] = max(-(self.table_width - self.paddle_width - self.borderThickness) / 2, min((self.table_width - self.paddle_width - self.borderThickness) / 2, self.paddle_positions['player1'] + (-0.1 if direction == 'right' else 0.1)))
             elif player == 'player2':
-                self.paddle_positions['player2'] = max(-0.75, min(0.75, self.paddle_positions['player2'] + (-0.05 if direction == 'right' else 0.05)))
+                self.paddle_positions['player2'] = max(-(self.table_width - self.paddle_width - self.borderThickness) / 2, min((self.table_width - self.paddle_width - self.borderThickness) / 2, self.paddle_positions['player2'] + (-0.1 if direction == 'right' else 0.1)))
 
             await self.send_game_state()
 
@@ -321,15 +325,15 @@ class GameConsumer(AsyncWebsocketConsumer):
                 return  # 게임이 종료된 경우 공 위치 업데이트 중지
 
             # x축에서 벽에 부딪힐 경우 반사
-            if abs(self.ball_position['x']) >= 0.75:
+            if abs(self.ball_position['x']) >= (self.table_width - self.borderThickness) / 2:
                 self.ball_velocity['x'] = -self.ball_velocity['x']
 
             self.ball_position['x'] += self.ball_velocity['x']
             self.ball_position['z'] += self.ball_velocity['z']
 
-            if self.ball_position['z'] <= -1.5:
+            if self.ball_position['z'] <= -(self.table_depth - 0.4) / 2:
                 # 패들에 맞았을 때 x와 z 속도를 모두 조정
-                if abs(self.ball_position['x'] - self.paddle_positions['player1']) <= 0.25:
+                if abs(self.ball_position['x'] - self.paddle_positions['player1']) <= (self.paddle_width / 2):
                     offset = self.ball_position['x'] - self.paddle_positions['player1']
                     offset = max(min(offset, 0.2), -0.2)
 
@@ -342,8 +346,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                     else:
                         await self.reset_ball()
 
-            elif self.ball_position['z'] >= 1.5:
-                if abs(self.ball_position['x'] - self.paddle_positions['player2']) <= 0.25:
+            elif self.ball_position['z'] >= (self.table_depth - 0.4) / 2:
+                if abs(self.ball_position['x'] - self.paddle_positions['player2']) <= (self.paddle_width / 2):
                     offset = self.ball_position['x'] - self.paddle_positions['player2']
                     offset = max(min(offset, 0.2), -0.2)
 
