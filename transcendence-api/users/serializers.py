@@ -1,3 +1,4 @@
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 from users.models import CustomUser
 
@@ -42,3 +43,16 @@ class UserScoreSerializer(serializers.ModelSerializer):
         instance.score = validated_data.get('score', instance.score)
         instance.save()
         return instance
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # 유저의 추가 정보 넣기
+        token['intra_id'] = user.oauthID
+        token['email'] = user.email
+        token['image'] = user.image.url if user.image else None
+
+        return token

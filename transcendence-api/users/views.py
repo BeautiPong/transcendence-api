@@ -25,6 +25,7 @@ import json
 from users.utils import get_user_info
 from datetime import timedelta
 from .utils import save_image_from_url
+from .serializers import CustomTokenObtainPairSerializer
 
 # Create your views here.
 
@@ -96,7 +97,7 @@ def get_token(request):
             image_file = None  # 이미지가 없으면 None 처리
 
         user = CustomUser.objects.create_ft_user(oauthID=intra_id, email=email, image=image_file)
-
+        print(f"User image: {user.image}")
         message = "42user 회원가입 성공!"
         temp_token = AccessToken.for_user(user)  # temp token 생성
         temp_token.set_exp(lifetime=timedelta(minutes=5))  # 토큰 유효 기간을 5분으로 설정
@@ -128,7 +129,8 @@ class OauthNicknameView(APIView) :
         user.nickname = new_nickname
         user.save()
 
-        token = TokenObtainPairSerializer.get_token(user)  # refresh token 생성
+        print(f"User image: {user.image}")
+        token = CustomTokenObtainPairSerializer.get_token(user)  # refresh token 생성
         refresh_token = str(token)
         access_token = str(token.access_token)  # access token 생성
         response_data = {
@@ -136,6 +138,7 @@ class OauthNicknameView(APIView) :
             "access_token": access_token,
             "refresh_token": refresh_token
         }
+        print(f"User image: {user.image}")
 
         return Response(response_data, status=status.HTTP_200_OK)
 
