@@ -16,6 +16,7 @@ from rest_framework                             import status
 from users.models                               import CustomUser
 from django.http                                import HttpResponseRedirect
 from django.http                                import JsonResponse
+from django.db                                  import transaction
 import urllib.parse
 from rest_framework.permissions import IsAuthenticated
 import requests
@@ -38,7 +39,7 @@ def get_code(request):
 def get_token(request):
     code = request.GET.get('code')
     client_id = 'u-s4t2ud-5165cfc59957b2a5cd674a6fc909e1e94378eff8b68d30144cbf571ed0b80ea1'  # 42에서 제공한 클라이언트 ID
-    client_secret = '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'  # 42에서 제공한 클라이언트 시크릿
+    client_secret = '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'  # 42에서 제공한 클라이언트 시크릿
     redirect_uri = 'http://localhost:81/42oauth-redirect'  # 이전에 사용한 리디렉션 URL
     grant_type = 'authorization_code'
     scope = 'public profile'  # 42에서 제공한 스코프
@@ -111,6 +112,7 @@ class OauthNicknameView(APIView) :
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
+    @transaction.atomic
     def post(self, request):
         data = request.data
         new_nickname = data.get('nickname')
@@ -126,7 +128,16 @@ class OauthNicknameView(APIView) :
         user.nickname = new_nickname
         user.save()
 
-        return Response({"message": "닉네임 설정이 완료되었습니다."}, status=status.HTTP_200_OK)
+        token = TokenObtainPairSerializer.get_token(user)  # refresh token 생성
+        refresh_token = str(token)
+        access_token = str(token.access_token)  # access token 생성
+        response_data = {
+            "message": "닉네임 설정이 완료되었습니다.",
+            "access_token": access_token,
+            "refresh_token": refresh_token
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)
 
 class CustomPasswordValidator:
     def validate(self, password):
@@ -270,7 +281,7 @@ class UserProfileView(APIView):
     authentication_classes = [JWTAuthentication]
 
     def get(self, request):
-        user = request.user
+        user = CustomUser.objects.get(id=request.user.id)
         serializer = UserInfoSerializer(user, context={'request': request})
 
         win_rate = user.win_cnt / user.match_cnt * 100 if user.match_cnt != 0 else 0
