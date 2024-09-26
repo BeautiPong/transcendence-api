@@ -57,6 +57,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                     f"user_{receiver}", {
                     "type": "invite_game",
                     "sender" : sender,
+                    "receiver" : receiver,
                     "message": message,
                     }
                 )
@@ -64,10 +65,12 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     async def invite_game(self, event):
         sender = event["sender"]
         message = event["message"]
+        receiver = event['receiver']
 
         await self.send(text_data=json.dumps({
             'type': 'invite_game',
             'sender': sender,
+            "receiver" : receiver,
             'message': message
         }))
 
@@ -117,15 +120,15 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             'tag' : tag
         }))
 
-    async def invite_game(self, event):
-        sender = event["sender"]
-        message = event["message"]
+    # async def invite_game(self, event):
+    #     sender = event["sender"]
+    #     message = event["message"]
 
-        await self.send(text_data=json.dumps({
-            'sender': sender,
-            'type': 'invite_game',
-            'message': message
-        }))
+    #     await self.send(text_data=json.dumps({
+    #         'sender': sender,
+    #         'type': 'invite_game',
+    #         'message': message
+    #     }))
 
     async def join_room(self, event):
         self.waiting_room = event["waiting_room"]
