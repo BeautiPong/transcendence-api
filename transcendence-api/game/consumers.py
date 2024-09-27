@@ -640,7 +640,7 @@ class OfflineConsumer(AsyncWebsocketConsumer):
                 self.wait = False
 
     async def game_loop(self,user1, user2):
-        self.game = PingPongGame(100,50,10, user1, user2)
+        self.game = PingPongGame(100,50,4, user1, user2)
         print("game created")
         print("user1 =", user1, "user2 =", user2)
         while (self.keep_running):
