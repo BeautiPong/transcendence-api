@@ -1,9 +1,11 @@
 import asyncio
 import random
 import aioredis
+from autobahn.exception import Disconnected
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
+
 
 from django.db import transaction
 
@@ -181,6 +183,12 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.user = self.scope['user']
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.player_name = self.user.nickname
+        self.connection_open = True
+        self.table_depth = 4.5
+        self.table_width = 3.5
+        self.paddle_width = 0.5
+        self.borderThickness = 0.02
+
 
         if self.user.is_authenticated:
             if self.user.is_in_game:
@@ -243,6 +251,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                 self.scores['player2'] = 0
                 await self.end_game(winner=self.players['player1'])
 
+        self.connection_open = False
+        self.game_active = False
         await self.remove_user_from_room(self.room_name, self.player_name)
         await self.channel_layer.group_discard(self.room_name, self.channel_name)
 
@@ -252,8 +262,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.paddle_positions = {'player1': 0, 'player2': 0}
         self.scores = {'player1': 0, 'player2': 0}
 
-        # 플레이어의 게임 상태를 false로 설정
-        self.game_active = False
         await self.set_user_game_status(self.user, False)
 
 
@@ -279,11 +287,10 @@ class GameConsumer(AsyncWebsocketConsumer):
             player = data['player']
             # print(data)
 
-            # 패들 움직임 범위 제한 및 위치 업데이트
             if player == 'player1':
-                self.paddle_positions['player1'] = max(-0.75, min(0.75, self.paddle_positions['player1'] + (-0.05 if direction == 'right' else 0.05)))
+                self.paddle_positions['player1'] = max(-(self.table_width - self.paddle_width - self.borderThickness) / 2, min((self.table_width - self.paddle_width - self.borderThickness) / 2, self.paddle_positions['player1'] + (-0.1 if direction == 'right' else 0.1)))
             elif player == 'player2':
-                self.paddle_positions['player2'] = max(-0.75, min(0.75, self.paddle_positions['player2'] + (-0.05 if direction == 'right' else 0.05)))
+                self.paddle_positions['player2'] = max(-(self.table_width - self.paddle_width - self.borderThickness) / 2, min((self.table_width - self.paddle_width - self.borderThickness) / 2, self.paddle_positions['player2'] + (-0.1 if direction == 'right' else 0.1)))
 
             await self.send_game_state()
 
@@ -300,11 +307,16 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def game_loop(self):
         try:
             while self.game_active:
+                # WebSocket 연결 상태 확인
+                if not self.connection_open:
+                    await self.close()
+                    break
+
                 await self.update_ball_position()
                 await self.send_game_state()
                 await asyncio.sleep(0.01)  # 게임 속도 조절
         except Exception as e:
-            print(f"Error in game_loop: {e}")
+            print(f"game_loop에서 에러 발생: {e}")
             await self.close()
 
     async def update_ball_position(self):
@@ -312,17 +324,19 @@ class GameConsumer(AsyncWebsocketConsumer):
             if not self.game_active:
                 return  # 게임이 종료된 경우 공 위치 업데이트 중지
 
+            # x축에서 벽에 부딪힐 경우 반사
+            if abs(self.ball_position['x']) >= (self.table_width - self.borderThickness) / 2:
+                self.ball_velocity['x'] = -self.ball_velocity['x']
+
             self.ball_position['x'] += self.ball_velocity['x']
             self.ball_position['z'] += self.ball_velocity['z']
 
-            # x축에서 벽에 부딪힐 경우 반사
-            if abs(self.ball_position['x']) >= 0.75:
-                self.ball_velocity['x'] = -self.ball_velocity['x']
-
-            # z축에서 패들에 부딪힐 경우 반사 또는 득점 처리
-            if self.ball_position['z'] <= -1.5:
-                if abs(self.ball_position['x'] - self.paddle_positions['player1']) <= 0.25:
+            if self.ball_position['z'] <= -(self.table_depth - 0.4) / 2:
+                # 패들에 맞았을 때 x와 z 속도를 모두 조정
+                if abs(self.ball_position['x'] - self.paddle_positions['player1']) <= (self.paddle_width / 2):
                     offset = self.ball_position['x'] - self.paddle_positions['player1']
+                    offset = max(min(offset, 0.2), -0.2)
+
                     self.ball_velocity['x'] += offset * 0.1
                     self.ball_velocity['z'] = -self.ball_velocity['z']
                 else:
@@ -332,21 +346,28 @@ class GameConsumer(AsyncWebsocketConsumer):
                     else:
                         await self.reset_ball()
 
-            elif self.ball_position['z'] >= 1.5:
-                if abs(self.ball_position['x'] - self.paddle_positions['player2']) <= 0.25:
+            elif self.ball_position['z'] >= (self.table_depth - 0.4) / 2:
+                if abs(self.ball_position['x'] - self.paddle_positions['player2']) <= (self.paddle_width / 2):
                     offset = self.ball_position['x'] - self.paddle_positions['player2']
+                    offset = max(min(offset, 0.2), -0.2)
+
                     self.ball_velocity['x'] += offset * 0.1
                     self.ball_velocity['z'] = -self.ball_velocity['z']
                 else:
+                    # 득점 처리
                     self.scores['player1'] += 1
                     if self.scores['player1'] >= 5:
                         await self.end_game(winner=self.players['player1'])
                     else:
                         await self.reset_ball()
 
+            self.ball_velocity['x'] = max(min(self.ball_velocity['x'], 0.1), -0.1)
+            self.ball_velocity['z'] = max(min(self.ball_velocity['z'], 0.1), -0.1)
+
         except Exception as e:
             print(f"Error in update_ball_position: {e}")
             await self.close()
+
 
     async def reset_ball(self):
         if not self.game_active:
@@ -360,8 +381,9 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def send_game_state(self):
         try:
-            if not self.game_active:
-                return  # 게임이 종료된 경우 게임 상태 전송 중지
+            if not self.connection_open:
+                return  # 연결이 닫힌 경우 전송하지 않음
+
             await self.channel_layer.group_send(
                 self.room_name,
                 {
@@ -371,8 +393,10 @@ class GameConsumer(AsyncWebsocketConsumer):
                     'scores': self.scores
                 }
             )
+        except Disconnected:
+            print("WebSocket이 닫혀서 게임 상태를 전송할 수 없습니다.")
         except Exception as e:
-            print(f"Error in send_game_state: {e}")
+            print(f"send_game_state에서 에러 발생: {e}")
             await self.close()
 
     async def send_update(self, event):
@@ -616,7 +640,7 @@ class OfflineConsumer(AsyncWebsocketConsumer):
                 self.wait = False
 
     async def game_loop(self,user1, user2):
-        self.game = PingPongGame(100,50,10, user1, user2)
+        self.game = PingPongGame(100,50,4, user1, user2)
         print("game created")
         print("user1 =", user1, "user2 =", user2)
         while (self.keep_running):
@@ -641,6 +665,5 @@ class OfflineConsumer(AsyncWebsocketConsumer):
         }))
         self.game.player1_score = 0
         self.game.player2_score = 0
-
 
 

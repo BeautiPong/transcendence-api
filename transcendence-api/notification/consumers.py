@@ -17,7 +17,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             await self.set_user_active_status(user, True)
             self.nickname = user.nickname
             self.group_name = f"user_{self.nickname}"
-            print("connect!! group_name:", self.group_name)
 
             await self.channel_layer.group_add(self.group_name, self.channel_name)
             await self.accept()
