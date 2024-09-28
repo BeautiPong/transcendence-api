@@ -123,8 +123,6 @@ class OauthNicknameView(APIView) :
 
         # 현재 로그인한 유저 정보 가져오기
         user = request.user
-
-        print("야새끼")
         # 닉네임 설정
         user.nickname = new_nickname
         user.save()

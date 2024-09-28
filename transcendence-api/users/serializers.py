@@ -22,8 +22,6 @@ class UserInfoSerializer(serializers.ModelSerializer):
         if CustomUser.objects.filter(nickname=nickname).exclude(pk=instance.pk).exists():
             raise serializers.ValidationError({"nickname": "This nickname is already in use."})
         instance.nickname = nickname
-
-        print("rotorRL")
         # 이미지 업데이트
         image = validated_data.get('image', None)
         print(image)
