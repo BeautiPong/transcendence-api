@@ -76,6 +76,17 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                     }
                 )
 
+            elif data['type'] == 'navigateToGamePage':
+                guest = data.get('guest')
+                room_name = data.get('room_name')
+                await self.channel_layer.group_send(
+                    f"user_{guest}", {
+                    "type": "navigateToGamePage",
+                    "room_name": room_name,
+                    "guest" : guest,
+                    }
+                )
+
     async def invite_game(self, event):
         sender = event["sender"]
         message = event["message"]
@@ -98,6 +109,15 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             'sender': sender,
             "receiver" : receiver,
             'message': message
+        }))
+    
+    async def navigateToGamePage(self, event):
+        guest = event["guest"]
+        room_name = event["room_name"]
+        await self.send(text_data=json.dumps({
+            'type': 'navigateToGamePage',
+            'room_name': room_name,
+            'guest': guest
         }))
 
     @database_sync_to_async

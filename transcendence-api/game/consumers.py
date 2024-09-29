@@ -16,6 +16,7 @@ class MatchingConsumer(AsyncWebsocketConsumer):
         self.user = self.scope['user']
         self.room_name = self.scope['url_route']['kwargs'].get('room_name', None)
         self.waiting_room = self.scope['url_route']['kwargs'].get('waiting_room', None)
+        self.host = self.scope['url_route']['kwargs'].get('host', None)
 
         if self.user.is_authenticated:
             if self.user.is_in_game:
@@ -39,7 +40,7 @@ class MatchingConsumer(AsyncWebsocketConsumer):
                     return
 
                 await self.channel_layer.group_add(self.room_name, self.channel_name)
-                await self.check_and_start_game()
+                await self.check_and_start_game(self.host)
         else:
             await self.close()
 
@@ -140,15 +141,25 @@ class MatchingConsumer(AsyncWebsocketConsumer):
             await self.close()
 
 
-    async def check_and_start_game(self):
+    async def check_and_start_game(self,host):
         players_in_room = await self.check_room_capacity(self.room_name)
         if players_in_room == 2:
             # 게임이 시작될 때 매칭 WebSocket 연결을 종료
-
+            guest = None
+            splited_room_name = self.room_name.split('_')
+            name1 = splited_room_name[0]
+            name2 = splited_room_name[1]
+            if(host == name1):
+                guest = name2
+            else:
+                guest = name1
+            print("guest : ",guest)
             await self.channel_layer.group_send(
                 self.room_name,
                 {
                     'type': 'game_start',
+                    'host': host,
+                    'guest': guest,
                     'room_name': 'game_' + self.room_name,
                     "message": "Game started"
                 }
@@ -167,6 +178,8 @@ class MatchingConsumer(AsyncWebsocketConsumer):
         if(self.room_name and 'room_name' in event):
             await self.send(text_data=json.dumps({
                 'type': 'game_start',
+                'host': event['host'],
+                'guest': event['guest'],
                 'room_name': event['room_name'],
                 'message': event['message']
             }))
