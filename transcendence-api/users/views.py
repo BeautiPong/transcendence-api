@@ -284,7 +284,7 @@ class UserProfileView(APIView):
         user = CustomUser.objects.get(id=request.user.id)
         serializer = UserInfoSerializer(user, context={'request': request})
 
-        win_rate = user.win_cnt / user.match_cnt * 100 if user.match_cnt != 0 else 0
+        win_rate = round(user.win_cnt / user.match_cnt * 100, 2) if user.match_cnt != 0 else 0
         response_data = serializer.data
         response_data['win_rate'] = win_rate
 
@@ -320,7 +320,7 @@ class UserInfoView(APIView):
         serializer = UserInfoSerializer(user, context={'request': request})
         
         # 승률 계산
-        win_rate = user.win_cnt / user.match_cnt * 100 if user.match_cnt != 0 else 0
+        win_rate = round(user.win_cnt / user.match_cnt * 100, 2) if user.match_cnt != 0 else 0
         
         # 직렬화된 데이터와 승률 포함
         response_data = serializer.data
