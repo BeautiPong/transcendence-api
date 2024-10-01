@@ -123,7 +123,6 @@ class OauthNicknameView(APIView) :
 
         # 현재 로그인한 유저 정보 가져오기
         user = request.user
-
         # 닉네임 설정
         user.nickname = new_nickname
         user.save()
@@ -275,17 +274,22 @@ class LogoutView(APIView) :
                             status = status.HTTP_200_OK)
 
 
-# 사용자 정보 반환
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
     def get(self, request):
-        user = CustomUser.objects.get(id=request.user.id)
+        user = CustomUser.objects.get(nickname=request.user.nickname)
+        # user = request.user
+        print("----변경전----")
+        print(user.image)
         serializer = UserInfoSerializer(user, context={'request': request})
+        print("----변경후----")
+        print(serializer.data['image'])
 
         win_rate = round(user.win_cnt / user.match_cnt * 100, 2) if user.match_cnt != 0 else 0
         response_data = serializer.data
+        print(response_data['image'])
         response_data['win_rate'] = win_rate
 
         return Response(response_data, status=status.HTTP_200_OK)
@@ -296,16 +300,15 @@ class UserProfileUpdateView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
-    def put(self, request):
+    @transaction.atomic
+    def patch(self, request):
         # 현재 로그인된 사용자의 UserProfile을 가져옵니다.
-        serializer = UserInfoSerializer(request.user, data=request.data,
-                                        partial=True)  # partial=True allows partial updates
+        serializer = UserInfoSerializer(request.user, data=request.data, partial=True, context={'request': request})  # context 추가
 
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class UserInfoView(APIView):
     permission_classes = [IsAuthenticated]

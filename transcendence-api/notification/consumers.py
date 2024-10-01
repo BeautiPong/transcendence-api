@@ -29,12 +29,21 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         user = self.scope['user']
         if user.is_authenticated:
-            await self.set_user_active_status(user, False)
-            await self.channel_layer.group_discard(self.group_name, self.channel_name)
+            try:
+                user = await self.refresh_user(user)  # 사용자 객체 다시 가져오기
+                await self.set_user_active_status(user, False)
+            except Exception as e:
+                print(f"Error in disconnect: {e}")
+        await self.channel_layer.group_discard(self.group_name, self.channel_name)
         # if self.waiting_room:
         #     await self.channel_layer.group_discard(self.waiting_room, self.channel_name)
         #     await self.redis_client.srem(self.waiting_room, user.nickname.encode())
 
+
+    @database_sync_to_async
+    def refresh_user(self, user):
+        return user.__class__.objects.get(pk=user.pk)
+        
     async def receive(self, text_data):
         try:
             data = json.loads(text_data)

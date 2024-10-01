@@ -38,7 +38,7 @@ class PreMessage(APIView):
             message_list = []
 
         return Response({"messages": message_list,
-                         "user": user.nickname},
+                            "user": user.nickname},
                         status=200)
         
 

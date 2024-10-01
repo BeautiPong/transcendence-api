@@ -19,17 +19,17 @@ class FriendList(APIView) :
     def get(self, request):
         user = request.user
 
-        friend_with_user1 = Friend.objects.filter(user1 = user, status=Friend.Status.ACCEPT)
+        # user1이 현재 유저이고 친구 요청이 수락된 친구 목록을 가져오기
+        friend_with_user1 = Friend.objects.filter(user1=user, status=Friend.Status.ACCEPT)
         friend_list = [friend.user2 for friend in friend_with_user1]
 
-        friend_info_list = [ ]
-        for friend in friend_list :
-            friend_info_list.append(get_user_info(friend.nickname))
-        friend_info_list_sorted = sorted(friend_info_list, key=lambda user_info: user_info["nickname"])
+        # UserInfoSerializer에 친구 목록 직렬화 및 request context 전달
+        friend_info_serializer = UserInfoSerializer(friend_list, many=True, context={'request': request})
 
-        friend_info_serializer = UserInfoSerializer(friend_info_list_sorted, many=True)
-        return Response({'friends':friend_info_serializer.data}, status=status.HTTP_200_OK)
+        # 닉네임을 기준으로 정렬 (serializer의 'name' 필드를 기준으로)
+        sorted_friend_data = sorted(friend_info_serializer.data, key=lambda user_info: user_info["nickname"])
 
+        return Response({'friends': sorted_friend_data}, status=status.HTTP_200_OK)
 
 # 친구 추가
 # 프론트에서 친구의 nickname을 주고
@@ -229,27 +229,29 @@ def get_my_friends_request(user) :
     ).all()
     return test
 
-
-# 친구 조회
-class SearchFriend(APIView) :
+class SearchFriend(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
-    def get(self, request, friend_nickname) :
-
+    def get(self, request, friend_nickname):
         print(f"Received request to find friend with nickname: {friend_nickname}")
 
         try:
             find_friend = CustomUser.objects.get(nickname=friend_nickname)
 
+            # 이미지가 존재하지 않을 경우 기본 이미지를 설정하거나 None으로 반환
+            friend_image_url = find_friend.image.url if find_friend.image else None
+
             friend_data = {
                 "name": find_friend.nickname,
-                "image": find_friend.image
+                "image": friend_image_url  # 이미지 URL 또는 None
             }
+
             return Response(friend_data, status=status.HTTP_200_OK)
 
         except CustomUser.DoesNotExist:
             raise NotFound(detail="Friend does not exist.", code=status.HTTP_404_NOT_FOUND)
+
 
 # 차단된 친구 조회
 class GetBlockFriendList(APIView) :
@@ -278,16 +280,16 @@ class PendFriendRequest(APIView) :
     authentication_classes = [JWTAuthentication]
 
     def get(self, request) :
-
         user = request.user
 
-        pendRequestFriends = Friend.objects.filter(user1=user, status='PN')
-        friend_list = [friend.user2 for friend in pendRequestFriends]
+        # 사용자에게 온 친구 요청 필터링
+        pend_request_friends = Friend.objects.filter(user1=user, status='PN')
+        friend_list = [friend.user2 for friend in pend_request_friends]
 
-        friend_info_list = [ ]
-        for friend in friend_list :
-            friend_info_list.append(get_user_info(friend.nickname))
-        friend_info_list_sorted = sorted(friend_info_list, key=lambda user_info: user_info["nickname"])
+        # UserInfoSerializer에 request를 context로 전달
+        friend_info_serializer = UserInfoSerializer(friend_list, many=True, context={'request': request})
 
-        friend_info_serializer = UserInfoSerializer(friend_info_list_sorted, many=True)
-        return Response({'friends':friend_info_serializer.data}, status=status.HTTP_200_OK)
+        # 친구 정보를 닉네임을 기준으로 정렬
+        sorted_friend_data = sorted(friend_info_serializer.data, key=lambda user_info: user_info["nickname"])
+
+        return Response({'friends': sorted_friend_data}, status=status.HTTP_200_OK)
