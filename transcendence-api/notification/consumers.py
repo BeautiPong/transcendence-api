@@ -28,10 +28,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             await self.close()
 
     async def disconnect(self, close_code):
-        # user = self.scope['user']
-        # if user.is_authenticated:
-        #     await self.set_user_active_status(user, False)
-        #     await self.channel_layer.group_discard(self.group_name, self.channel_name)
         user = self.scope['user']
         if user.is_authenticated:
             try:

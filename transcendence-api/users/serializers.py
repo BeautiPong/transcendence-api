@@ -17,11 +17,6 @@ class UserInfoSerializer(serializers.ModelSerializer):
         return request.build_absolute_uri('/path/to/default/image.jpg')  # 기본 이미지 경로
 
     def update(self, instance, validated_data):
-        # 닉네임 중복 체크
-        nickname = validated_data.get('nickname', instance.nickname)
-        if CustomUser.objects.filter(nickname=nickname).exclude(pk=instance.pk).exists():
-            raise serializers.ValidationError({"nickname": "This nickname is already in use."})
-        instance.nickname = nickname
         # 이미지 업데이트
         image = validated_data.get('image', None)
         print(image)
@@ -33,6 +28,7 @@ class UserInfoSerializer(serializers.ModelSerializer):
         instance.win_cnt = validated_data.get('win_cnt', instance.win_cnt)
         instance.score = validated_data.get('score', instance.score)
         instance.is_active = validated_data.get('is_active', instance.is_active)
+        instance.nickname = validated_data.get('nickname', instance.nickname)
 
         instance.save()
         return instance

@@ -300,16 +300,6 @@ class UserProfileUpdateView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
-    # def put(self, request):
-    #     # 현재 로그인된 사용자의 UserProfile을 가져옵니다.
-    #     serializer = UserInfoSerializer(request.user, data=request.data,
-    #                                     partial=True)  # partial=True allows partial updates
-
-    #     if serializer.is_valid():
-    #         serializer.save()
-    #         return Response(serializer.data, status=status.HTTP_200_OK)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
     @transaction.atomic
     def patch(self, request):
         # 현재 로그인된 사용자의 UserProfile을 가져옵니다.
