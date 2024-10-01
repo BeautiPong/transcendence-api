@@ -229,27 +229,29 @@ def get_my_friends_request(user) :
     ).all()
     return test
 
-
-# 친구 조회
-class SearchFriend(APIView) :
+class SearchFriend(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
-    def get(self, request, friend_nickname) :
-
+    def get(self, request, friend_nickname):
         print(f"Received request to find friend with nickname: {friend_nickname}")
 
         try:
             find_friend = CustomUser.objects.get(nickname=friend_nickname)
 
+            # 이미지가 존재하지 않을 경우 기본 이미지를 설정하거나 None으로 반환
+            friend_image_url = find_friend.image.url if find_friend.image else None
+
             friend_data = {
                 "name": find_friend.nickname,
-                "image": find_friend.image
+                "image": friend_image_url  # 이미지 URL 또는 None
             }
+
             return Response(friend_data, status=status.HTTP_200_OK)
 
         except CustomUser.DoesNotExist:
             raise NotFound(detail="Friend does not exist.", code=status.HTTP_404_NOT_FOUND)
+
 
 # 차단된 친구 조회
 class GetBlockFriendList(APIView) :
