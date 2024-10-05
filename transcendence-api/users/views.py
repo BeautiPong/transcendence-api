@@ -281,11 +281,7 @@ class UserProfileView(APIView):
     def get(self, request):
         user = CustomUser.objects.get(nickname=request.user.nickname)
         # user = request.user
-        print("----변경전----")
-        print(user.image)
         serializer = UserInfoSerializer(user, context={'request': request})
-        print("----변경후----")
-        print(serializer.data['image'])
 
         win_rate = round(user.win_cnt / user.match_cnt * 100, 2) if user.match_cnt != 0 else 0
         response_data = serializer.data

@@ -428,6 +428,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             player1_score = user1.score - 20
             player2_score = user2.score + 20
 
+        await self.save_game_results(winner)
+
         await self.channel_layer.group_send(
             self.room_name,
             {
@@ -441,12 +443,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             }
         )
 
-        # 게임 상태 초기화
-        self.ball_position = {'x': 0, 'y': 0, 'z': 0}
-        self.ball_velocity = {'x': 0.01, 'y': 0, 'z': random.choice([-0.02, 0.02])}
-        self.paddle_positions = {'player1': 0, 'player2': 0}
-        self.scores = {'player1': 0, 'player2': 0}
-
         # 플레이어를 방에서 제거
         await self.remove_user_from_room(self.room_name, self.players['player1'])
         await self.remove_user_from_room(self.room_name, self.players['player2'])
@@ -454,7 +450,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         # 연결을 끊기 전에 일정 시간 대기 (예: 2초)
         await asyncio.sleep(2)
 
-        await self.save_game_results(winner)
+        # await self.save_game_results(winner)
 
         # WebSocket 연결 종료
         await self.close()
@@ -546,8 +542,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.redis_client.srem(f"group_{room_name}", nickname)
         except Exception as e:
             print(f"Error in remove_user_from_room: {e}")
-
-
 
 
 
