@@ -65,18 +65,68 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                     f"user_{receiver}", {
                     "type": "invite_game",
                     "sender" : sender,
+                    "receiver" : receiver,
                     "message": message,
+                    }
+                )
+            
+            elif data['type'] == 'access_invitation':
+                print("access_invitation")
+                sender = data.get('sender')  # 'sender' 필드를 추출
+                receiver = data.get('receiver')  # 'receiver' 필드를 추출
+                message = data.get('message')  # 'message' 필드를 추출
+
+                await self.channel_layer.group_send(
+                    f"user_{receiver}", {
+                    "type": "access_invitation",
+                    "sender" : sender,
+                    "receiver" : receiver,
+                    "message": message,
+                    }
+                )
+
+            elif data['type'] == 'navigateToGamePage':
+                guest = data.get('guest')
+                room_name = data.get('room_name')
+                await self.channel_layer.group_send(
+                    f"user_{guest}", {
+                    "type": "navigateToGamePage",
+                    "room_name": room_name,
+                    "guest" : guest,
                     }
                 )
 
     async def invite_game(self, event):
         sender = event["sender"]
         message = event["message"]
+        receiver = event['receiver']
 
         await self.send(text_data=json.dumps({
             'type': 'invite_game',
             'sender': sender,
+            "receiver" : receiver,
             'message': message
+        }))
+
+    async def access_invitation(self, event):
+        sender = event["sender"]
+        message = event["message"]
+        receiver = event['receiver']
+
+        await self.send(text_data=json.dumps({
+            'type': 'access_invitation',
+            'sender': sender,
+            "receiver" : receiver,
+            'message': message
+        }))
+    
+    async def navigateToGamePage(self, event):
+        guest = event["guest"]
+        room_name = event["room_name"]
+        await self.send(text_data=json.dumps({
+            'type': 'navigateToGamePage',
+            'room_name': room_name,
+            'guest': guest
         }))
 
     @database_sync_to_async
@@ -125,15 +175,15 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             'tag' : tag
         }))
 
-    async def invite_game(self, event):
-        sender = event["sender"]
-        message = event["message"]
+    # async def invite_game(self, event):
+    #     sender = event["sender"]
+    #     message = event["message"]
 
-        await self.send(text_data=json.dumps({
-            'sender': sender,
-            'type': 'invite_game',
-            'message': message
-        }))
+    #     await self.send(text_data=json.dumps({
+    #         'sender': sender,
+    #         'type': 'invite_game',
+    #         'message': message
+    #     }))
 
     async def join_room(self, event):
         self.waiting_room = event["waiting_room"]

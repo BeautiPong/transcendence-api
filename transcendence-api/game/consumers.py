@@ -20,6 +20,7 @@ class MatchingConsumer(AsyncWebsocketConsumer):
         self.user = self.scope['user']
         self.room_name = self.scope['url_route']['kwargs'].get('room_name', None)
         self.waiting_room = self.scope['url_route']['kwargs'].get('waiting_room', None)
+        self.host = self.scope['url_route']['kwargs'].get('host', None)
 
         if self.user.is_authenticated:
             if self.user.is_in_game:
@@ -34,14 +35,16 @@ class MatchingConsumer(AsyncWebsocketConsumer):
                 await self.redis_client.lpush(self.matchmaking_queue_key, self.user.nickname)
                 await self.match_users()
             else:
+                print("self.user.nickname in matchingconsumer: ",self.user.nickname)
                 await self.add_user_to_room(self.room_name, self.user.nickname)
                 players_in_room = await self.check_room_capacity(self.room_name)
+                print("players_in_room: ",players_in_room)
                 if players_in_room > 2:
                     await self.close()
                     return
 
                 await self.channel_layer.group_add(self.room_name, self.channel_name)
-                await self.check_and_start_game()
+                await self.check_and_start_game(self.host)
         else:
             await self.close()
 
@@ -84,7 +87,10 @@ class MatchingConsumer(AsyncWebsocketConsumer):
 
     async def add_user_to_room(self, room_name, nickname):
         # 사용자를 방에 추가 (Redis set 사용)
+        # asyncio.sleep(1)
         await self.redis_client.sadd(f"group_{room_name}", nickname)
+        print("self.redis_client.sadd : ", f"group_{room_name}", nickname)
+        print("players num : ",await self.check_room_capacity(self.room_name))
 
     async def remove_user_from_room(self, room_name, nickname):
         # 사용자를 방에서 제거 (Redis set 사용)
@@ -146,15 +152,25 @@ class MatchingConsumer(AsyncWebsocketConsumer):
             await self.close()
 
 
-    async def check_and_start_game(self):
+    async def check_and_start_game(self,host):
         players_in_room = await self.check_room_capacity(self.room_name)
         if players_in_room == 2:
             # 게임이 시작될 때 매칭 WebSocket 연결을 종료
-
+            guest = None
+            splited_room_name = self.room_name.split('_')
+            name1 = splited_room_name[0]
+            name2 = splited_room_name[1]
+            if(host == name1):
+                guest = name2
+            else:
+                guest = name1
+            print("guest : ",guest)
             await self.channel_layer.group_send(
                 self.room_name,
                 {
                     'type': 'game_start',
+                    'host': host,
+                    'guest': guest,
                     'room_name': 'game_' + self.room_name,
                     "message": "Game started"
                 }
@@ -173,6 +189,8 @@ class MatchingConsumer(AsyncWebsocketConsumer):
         if(self.room_name and 'room_name' in event):
             await self.send(text_data=json.dumps({
                 'type': 'game_start',
+                'host': event['host'],
+                'guest': event['guest'],
                 'room_name': event['room_name'],
                 'message': event['message']
             }))
@@ -195,7 +213,9 @@ class GameConsumer(AsyncWebsocketConsumer):
                 self.close()
                 return
         # room_name을 '_'로 분리하여 두 플레이어의 닉네임을 가져옵니다.
-        _, name1, name2 = self.room_name.split('_')
+        splited_room_name = self.room_name.split('_')
+        name1 = splited_room_name[1]
+        name2 = splited_room_name[2]
 
         await self.channel_layer.group_add(self.room_name, self.channel_name)
         await self.accept()
@@ -535,6 +555,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         return await self.redis_client.scard(f"group_{room_name}")
 
     async def add_user_to_room(self, room_name, nickname):
+        print("add_user_to_room2")
         await self.redis_client.sadd(f"group_{room_name}", nickname)
 
     async def remove_user_from_room(self, room_name, nickname):
