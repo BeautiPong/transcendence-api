@@ -7,7 +7,7 @@ class UserInfoSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = CustomUser
-        fields = ['nickname', 'image','image_url', 'match_cnt', 'win_cnt', 'score', 'is_active']
+        fields = ['nickname', 'image','image_url', 'match_cnt', 'win_cnt', 'score', 'is_online']
 
     def get_image_url(self, obj):
         request = self.context.get('request')
@@ -27,7 +27,7 @@ class UserInfoSerializer(serializers.ModelSerializer):
         instance.match_cnt = validated_data.get('match_cnt', instance.match_cnt)
         instance.win_cnt = validated_data.get('win_cnt', instance.win_cnt)
         instance.score = validated_data.get('score', instance.score)
-        instance.is_active = validated_data.get('is_active', instance.is_active)
+        instance.is_online = validated_data.get('is_online', instance.is_online)
         instance.nickname = validated_data.get('nickname', instance.nickname)
 
         instance.save()

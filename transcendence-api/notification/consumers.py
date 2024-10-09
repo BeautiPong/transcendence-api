@@ -8,6 +8,7 @@ from rest_framework.utils import json
 import friend.views
 import message.views
 from friend.views import get_my_friends_request
+from friend.models import Friend
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -21,6 +22,9 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_add(self.group_name, self.channel_name)
             await self.accept()
 
+             # 친구들에게 나의 상태 알림 전송
+            await self.notify_friends_status(user, 'online')
+
             # 비동기 컨텍스트에서 Django ORM 호출
             await self.send_notifications(user)
         else:
@@ -32,13 +36,48 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             try:
                 user = await self.refresh_user(user)  # 사용자 객체 다시 가져오기
                 await self.set_user_active_status(user, False)
+                # 친구들에게 나의 상태 알림 전송
+                await self.notify_friends_status(user, 'offline')
             except Exception as e:
                 print(f"Error in disconnect: {e}")
-        await self.channel_layer.group_discard(self.group_name, self.channel_name)
+            
+            # group_discard를 인증된 사용자 블록 내부로 이동
+            if hasattr(self, 'group_name'):
+                await self.channel_layer.group_discard(self.group_name, self.channel_name)
         # if self.waiting_room:
         #     await self.channel_layer.group_discard(self.waiting_room, self.channel_name)
         #     await self.redis_client.srem(self.waiting_room, user.nickname.encode())
 
+
+    async def notify_friends_status(self, user, status):
+        friends = await self.get_friends_list(user)
+        for friend in friends:
+            friend_group_name = f"user_{friend.nickname}"
+            await self.channel_layer.group_send(
+                friend_group_name,
+                {
+                    'type': 'status_message',
+                    'sender' : f"{user.nickname}",
+                    'message': f"{user.nickname} is {status}",
+                    'status' : f"{status}"
+                }
+            )
+
+    @database_sync_to_async
+    def get_friends_list(self, user):
+        # 비동기로 친구 리스트 가져오기 (예시로 Django ORM 사용)
+        # friends = await database_sync_to_async(lambda: user.friends.all())()
+        # return friends
+        friend_with_user1 = Friend.objects.filter(user1=user, status=Friend.Status.ACCEPT)
+        friend_list = [friend.user2 for friend in friend_with_user1]
+        return friend_list
+
+    async def status_message(self, event):
+        message = event['message']
+        sender = event['sender']
+        status = event['status']
+        # 메시지를 JSON 형식으로 전송
+        await self.send(text_data=json.dumps({'type' : "status_message", 'sender' : sender, 'message': message, 'status' : status}))
 
     @database_sync_to_async
     def refresh_user(self, user):
