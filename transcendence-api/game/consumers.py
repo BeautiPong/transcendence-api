@@ -669,14 +669,23 @@ class OfflineConsumer(AsyncWebsocketConsumer):
             }))
             if(self.game.player1_score == 5):
                 self.winner = user1
+                self.loser = user2
+                self.win_score = self.game.player1_score
+                self.lose_score = self.game.player2_score
                 break
             elif (self.game.player2_score == 5):
                 self.winner = user2
+                self.loser = user1
+                self.win_score = self.game.player2_score
+                self.lose_score = self.game.player1_score
                 break
 
         await self.send(text_data=json.dumps({
             'type': 'game_end',
-            'winner': self.winner
+            'winner': self.winner,
+            'loser': self.loser,
+            'win_score': self.win_score,
+            'lose_score': self.lose_score
         }))
         self.game.player1_score = 0
         self.game.player2_score = 0
