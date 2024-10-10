@@ -44,7 +44,7 @@ class MatchingConsumer(AsyncWebsocketConsumer):
                     return
 
                 await self.channel_layer.group_add(self.room_name, self.channel_name)
-                await self.check_and_start_game(self.host)
+                await self.check_and_start_game_friends(self.host)
         else:
             await self.close()
 
@@ -152,7 +152,28 @@ class MatchingConsumer(AsyncWebsocketConsumer):
             await self.close()
 
 
-    async def check_and_start_game(self,host):
+
+    async def check_and_start_game(self):
+        players_in_room = await self.check_room_capacity(self.room_name)
+        if players_in_room == 2:
+            # 게임이 시작될 때 매칭 WebSocket 연결을 종료
+            await self.channel_layer.group_send(
+                self.room_name,
+                {
+                    'type': 'game_start',
+                    'room_name': 'game_' + self.room_name,
+                    "message": "Game started"
+                }
+            )
+            await self.send(text_data=json.dumps({
+                'type': 'disconnect_matching',  # 연결 종료 신호
+            }))
+            if self.waiting_room:
+                await self.channel_layer.group_discard(self.waiting_room, self.channel_name)
+
+
+
+    async def check_and_start_game_friends(self,host):
         players_in_room = await self.check_room_capacity(self.room_name)
         if players_in_room == 2:
             # 게임이 시작될 때 매칭 WebSocket 연결을 종료
@@ -168,7 +189,7 @@ class MatchingConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(
                 self.room_name,
                 {
-                    'type': 'game_start',
+                    'type': 'game_start_friend',
                     'host': host,
                     'guest': guest,
                     'room_name': 'game_' + self.room_name,
@@ -184,6 +205,17 @@ class MatchingConsumer(AsyncWebsocketConsumer):
 
 
     async def game_start(self, event):
+        # print("self.room_name", self.room_name)
+        # print("event['room_name']", event['room_name'])
+        if(self.room_name and 'room_name' in event):
+            await self.send(text_data=json.dumps({
+                'type': 'game_start',
+                'room_name': event['room_name'],
+                'message': event['message']
+            }))
+
+
+    async def game_start_friend(self, event):
         # print("self.room_name", self.room_name)
         # print("event['room_name']", event['room_name'])
         if(self.room_name and 'room_name' in event):
@@ -410,6 +442,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                     'type': 'send_update',
                     'ball_position': self.ball_position,
                     'paddle_positions': self.paddle_positions,
+                    'player1': self.players['player1'],
+                    'player2': self.players['player2'],
                     'scores': self.scores
                 }
             )
@@ -423,6 +457,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         ball_position = event['ball_position']
         paddle_positions = event['paddle_positions']
         scores = event['scores']
+        player1 = event['player1']
+        player2 = event['player2']
         self.ball_position = event['ball_position']
         self.paddle_positions = paddle_positions
         self.scores = scores
@@ -431,6 +467,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             'type': 'game_state',
             'ball_position': ball_position,
             'paddle_positions': paddle_positions,
+            'player1': player1,
+            'player2': player2,
             'scores': scores,
         }))
 
