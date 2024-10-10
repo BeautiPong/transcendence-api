@@ -442,6 +442,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                     'type': 'send_update',
                     'ball_position': self.ball_position,
                     'paddle_positions': self.paddle_positions,
+                    'player1': self.players['player1'],
+                    'player2': self.players['player2'],
                     'scores': self.scores
                 }
             )
@@ -455,6 +457,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         ball_position = event['ball_position']
         paddle_positions = event['paddle_positions']
         scores = event['scores']
+        player1 = event['player1']
+        player2 = event['player2']
         self.ball_position = event['ball_position']
         self.paddle_positions = paddle_positions
         self.scores = scores
@@ -463,6 +467,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             'type': 'game_state',
             'ball_position': ball_position,
             'paddle_positions': paddle_positions,
+            'player1': player1,
+            'player2': player2,
             'scores': scores,
         }))
 
