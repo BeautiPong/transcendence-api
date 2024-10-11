@@ -40,7 +40,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 await self.notify_friends_status(user, 'offline')
             except Exception as e:
                 print(f"Error in disconnect: {e}")
-            
+
             # group_discard를 인증된 사용자 블록 내부로 이동
             if hasattr(self, 'group_name'):
                 await self.channel_layer.group_discard(self.group_name, self.channel_name)
@@ -63,6 +63,16 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 }
             )
 
+    async def notify_message(self, event):
+        sender = event['sender']
+        message = event['message']
+
+        await self.send(text_data=json.dumps({
+            'type': 'notify_message',
+            'sender': sender,
+            'message': message
+        }))
+
     @database_sync_to_async
     def get_friends_list(self, user):
         # 비동기로 친구 리스트 가져오기 (예시로 Django ORM 사용)
@@ -82,7 +92,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def refresh_user(self, user):
         return user.__class__.objects.get(pk=user.pk)
-        
+
     async def receive(self, text_data):
         try:
             data = json.loads(text_data)
@@ -108,7 +118,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                     "message": message,
                     }
                 )
-            
+
             elif data['type'] == 'access_invitation':
                 print("access_invitation")
                 sender = data.get('sender')  # 'sender' 필드를 추출
@@ -135,6 +145,19 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                     }
                 )
 
+            elif data['type'] == 'notify_message_sent':
+                sender = data.get('sender')
+                receiver = data.get('receiver')
+                message = data.get('message')
+                await self.channel_layer.group_send(
+                    f"user_{receiver}", {
+                        'type': 'notify_message',
+                        'sender': sender,
+                        'message': message
+                    }
+                )
+
+
     async def invite_game(self, event):
         sender = event["sender"]
         message = event["message"]
@@ -158,7 +181,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             "receiver" : receiver,
             'message': message
         }))
-    
+
     async def navigateToGamePage(self, event):
         guest = event["guest"]
         room_name = event["room_name"]
