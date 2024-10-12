@@ -4,17 +4,25 @@ from users.models import CustomUser
 
 class UserInfoSerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()  # image_url 필드 추가
-    
+
     class Meta:
         model = CustomUser
         fields = ['nickname', 'image','image_url', 'match_cnt', 'win_cnt', 'score', 'is_online']
 
     def get_image_url(self, obj):
-        request = self.context.get('request')
-        if obj.image:
-            # 이미지가 존재하면 절대 URL을 반환
-            return request.build_absolute_uri(obj.image.url)
-        return request.build_absolute_uri('/path/to/default/image.jpg')  # 기본 이미지 경로
+        request = self.context.get('request', None)
+        if request:
+            if obj.image:
+                # 이미지가 존재하면 절대 URL을 반환
+                return request.build_absolute_uri(obj.image.url)
+            return request.build_absolute_uri('/path/to/default/image.jpg')
+        return '/path/to/default/image.jpg'
+
+        # request = self.context.get('request')
+        # if obj.image:
+        #     # 이미지가 존재하면 절대 URL을 반환
+        #     return request.build_absolute_uri(obj.image.url)
+        # return request.build_absolute_uri('/path/to/default/image.jpg')  # 기본 이미지 경로
 
     def update(self, instance, validated_data):
         # 이미지 업데이트
