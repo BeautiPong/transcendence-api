@@ -83,10 +83,12 @@ def get_token(request):
         token = TokenObtainPairSerializer.get_token(user)  # refresh token 생성
         refresh_token = str(token)
         access_token = str(token.access_token)  # access token 생성
+        nickname = user.nickname
         response_data = {
             "message": message,
             "access_token": access_token,
-            "refresh_token": refresh_token
+            "refresh_token": refresh_token,
+            "nickname": nickname,
         }
     else:
         # 새로운 유저 생성
