@@ -134,6 +134,16 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                     "guest" : guest,
                     }
                 )
+            elif data['type'] == 'leaveWaitingRoom':
+                leaver = data.get('leaver')
+                remainder = data.get('remainder')
+                await self.channel_layer.group_send(
+                    f"user_{remainder}", {
+                    "type": "leaveWaitingRoom",
+                    "leaver": leaver,
+                    "remainder": remainder
+                    }
+                )
 
     async def invite_game(self, event):
         sender = event["sender"]
@@ -166,6 +176,15 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             'type': 'navigateToGamePage',
             'room_name': room_name,
             'guest': guest
+        }))
+
+    async def leaveWaitingRoom(self, event):
+        leaver = event["leaver"]
+        remainder = event["remainder"]
+        await self.send(text_data=json.dumps({
+            'type': 'leaveWaitingRoom',
+            'leaver': leaver,
+            'remainder': remainder
         }))
 
     @database_sync_to_async
