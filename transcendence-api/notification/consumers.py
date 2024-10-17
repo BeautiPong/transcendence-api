@@ -135,6 +135,17 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                     }
                 )
 
+            elif data['type'] == 'get_notifications':
+                user = self.scope['user']
+
+                await self.send_notifications(user)
+
+            elif data['type'] == 'notify_status_message':
+                user = self.scope['user']
+                status = data.get('status')
+
+                await self.notify_friends_status(user, status)
+
     async def invite_game(self, event):
         sender = event["sender"]
         message = event["message"]
