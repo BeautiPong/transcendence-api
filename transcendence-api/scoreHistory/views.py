@@ -23,6 +23,7 @@ class OverallRankingsView(APIView):
             rank = idx + 1
             overall_rankings.append({
                 'nickname': user.nickname,
+                'image' : user.image, 
                 'rank': rank
             })
         
@@ -30,10 +31,11 @@ class OverallRankingsView(APIView):
         for user in users_without_matches:
             overall_rankings.append({
                 'nickname': user.nickname,
+                'image' :  user.image, 
                 'rank': None
             })
         
-        overall_serializer = OverallRankingSerializer(overall_rankings, many=True)
+        overall_serializer = OverallRankingSerializer(overall_rankings, many=True, context={'request': request})
         return Response(overall_serializer.data, status=status.HTTP_200_OK)
 
 
