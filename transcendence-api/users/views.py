@@ -39,7 +39,7 @@ def get_code(request):
 def get_token(request):
     code = request.GET.get('code')
     client_id = 'u-s4t2ud-5165cfc59957b2a5cd674a6fc909e1e94378eff8b68d30144cbf571ed0b80ea1'  # 42에서 제공한 클라이언트 ID
-    client_secret = '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'  # 42에서 제공한 클라이언트 시크릿
+    client_secret = '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'  # 42에서 제공한 클라이언트 시크릿
     redirect_uri = 'http://localhost:81/42oauth-redirect'  # 이전에 사용한 리디렉션 URL
     grant_type = 'authorization_code'
     scope = 'public profile'  # 42에서 제공한 스코프
