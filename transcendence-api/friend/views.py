@@ -153,6 +153,29 @@ class AcceptFriend(APIView) :
         chattingRoom.save()
 
         return Response({"message": "친구관계 성립~"}, status=status.HTTP_200_OK)
+    
+
+# 친구 요청 거절
+class RefuseFriend(APIView) :
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def post(self, request, friend_nickname) :
+        user = request.user
+        try:
+            user2 = CustomUser.objects.get(nickname=friend_nickname)
+        except CustomUser.DoesNotExist:
+            raise NotFound(detail="Friend does not exist.", code=status.HTTP_404_NOT_FOUND)
+
+        try:
+            friend2 = Friend.objects.get(user1=user2, user2=user)
+        except Friend.DoesNotExist:
+            raise NotFound(detail="Friend relationship does not exist.", code=status.HTTP_404_NOT_FOUND)
+        
+        friend2.delete()
+
+        return Response({"message": f"You refused {friend_nickname}'s friend request."}, status=status.HTTP_200_OK)
+
 
 # 친구 차단
 class BlockFriend(APIView) :
