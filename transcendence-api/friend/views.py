@@ -293,8 +293,9 @@ class PendFriendRequest(APIView) :
         user = request.user
 
         # 사용자에게 온 친구 요청 필터링
-        pend_request_friends = Friend.objects.filter(user1=user, status='PN')
-        friend_list = [friend.user2 for friend in pend_request_friends]
+        pend_request_friends = Friend.objects.filter(user2=user, status='SD')
+        # pend_request_friends = Friend.objects.filter(user1=user, status='PN')
+        friend_list = [friend.user1 for friend in pend_request_friends]
 
         # UserInfoSerializer에 request를 context로 전달
         friend_info_serializer = UserInfoSerializer(friend_list, many=True, context={'request': request})
