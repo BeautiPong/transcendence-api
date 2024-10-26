@@ -71,14 +71,15 @@ class AddFriend(APIView) :
             friend.save()
 
             # 친구 요청 받은 사람 = user1
-            friend = Friend(
-                user1=user2,
-                user2=user,
-                user1_victory_num=0,
-                user2_victory_num=0,
-                status=Friend.Status.PEND
-            )
-            friend.save()
+            # 친구 요청을 수락할때 관계 만들어서 저장해두기
+            # friend = Friend(
+            #     user1=user2,
+            #     user2=user,
+            #     user1_victory_num=0,
+            #     user2_victory_num=0,
+            #     status=Friend.Status.PEND
+            # )
+            # friend.save()
 
             # 친구가 온라인에 있으면 소켓으로 보내기
             if user2.is_online:
@@ -106,21 +107,30 @@ class AcceptFriend(APIView) :
         user = request.user
         user2 = CustomUser.objects.filter(nickname=friend_nickname).first()
 
-        friend1 = Friend.objects.filter(user1=user, user2=user2).first()
+        # friend1 = Friend.objects.filter(user1=user, user2=user2).first()
         friend2 = Friend.objects.filter(user1=user2, user2=user).first()
 
         # 요청오지 않은 유저를 수락한 경우
-        if (friend1 is None or friend2 is None) :
-            raise ValidationError(detail="You haven't received a friend request from that friend", code=status.HTTP_400_BAD_REQUEST)
+        # if (friend1 is None or friend2 is None) :
+            # raise ValidationError(detail="You haven't received a friend request from that friend", code=status.HTTP_400_BAD_REQUEST)
 
         # 이미 수락한 경우
-        if (friend1.status == "AC" or friend2.status == "AC") :
-            raise ValidationError(detail="You already accept friend", code=status.HTTP_400_BAD_REQUEST)
+        # if (friend1.status == "AC" or friend2.status == "AC") :
+            # raise ValidationError(detail="You already accept friend", code=status.HTTP_400_BAD_REQUEST)
+        
+        # 친구 요청 수락하기
+        # 근데 이미 내가 관계가 있다면 새롭게 생성하지 않기
+        # friend1 = Friend(
+        #     user1=user,
+        #     user2=user2,
+        #     user1_victory_num=0,
+        #     user2_victory_num=0,
+        #     status=Friend.Status.ACCEPT
+        # )
+        # friend1.save()
 
-        friend1.status = Friend.Status.ACCEPT
+        # 상대방한테 ACCEPT 표시
         friend2.status = Friend.Status.ACCEPT
-
-        friend1.save()
         friend2.save()
 
         # if user2.is_active :
@@ -203,12 +213,12 @@ class DeleteFriend(APIView) :
 
         try:
             friend1 = Friend.objects.get(user1=user, user2=user2)
-            friend2 = Friend.objects.get(user1=user2, user2=user)
+            # friend2 = Friend.objects.get(user1=user2, user2=user)
         except Friend.DoesNotExist:
             raise NotFound(detail="Friend relationship does not exist.", code=status.HTTP_404_NOT_FOUND)
 
         friend1.delete()
-        friend2.delete()
+        # friend2.delete()
 
         return Response({"message": f"You deleted {friend_nickname}."}, status=status.HTTP_200_OK)
 
