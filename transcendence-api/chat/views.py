@@ -40,6 +40,28 @@ class PreMessage(APIView):
         return Response({"messages": message_list,
                             "user": user.nickname},
                         status=200)
+    
+# 읽지 않은 디엠이 있는지 확인
+class CheckUnReadMessage(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def get(self, request, friend_nickname) :
+        user = request.user
+
+        # 채팅방 이름 생성
+        sorted_names = sorted([user.nickname, friend_nickname])
+        room_name = f'chat_{sorted_names[0]}_{sorted_names[1]}'
+        chatting_room = ChattingRoom.objects.filter(name=room_name).first()
+
+        # 친구 객체
+        friend = CustomUser.objects.get(nickname=friend_nickname)
+
+        # 상대방(sender)가 보낸 메시지 보기
+        messages = Message.objects.filter(room=chatting_room, sender=friend, read_status='no_read').all()
+        has_unread_messages = messages.exists()
+
+        return Response({"has_unread": has_unread_messages})
         
 
 # 채팅방 그룹 이름 설정
