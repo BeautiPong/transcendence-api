@@ -376,3 +376,15 @@ def login_and_redirect(request):
 
     else:
         return redirect('/login_page/')  # POST 요청이 아닐 경우 로그인 페이지로 리다이렉트
+
+
+class DeleteAccountView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    @transaction.atomic
+    def delete(self, request):
+        user = request.user
+        user.delete()
+
+        return Response({"message": "회원탈퇴가 완료되었습니다."}, status=status.HTTP_200_OK)
