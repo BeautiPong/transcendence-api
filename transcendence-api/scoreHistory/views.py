@@ -24,6 +24,7 @@ class OverallRankingsView(APIView):
             overall_rankings.append({
                 'nickname': user.nickname,
                 'image' : user.image, 
+                'score' : user.score,
                 'rank': rank
             })
         
@@ -32,6 +33,7 @@ class OverallRankingsView(APIView):
             overall_rankings.append({
                 'nickname': user.nickname,
                 'image' :  user.image, 
+                'score' : user.score,
                 'rank': None
             })
         

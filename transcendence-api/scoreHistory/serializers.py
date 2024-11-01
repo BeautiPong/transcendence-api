@@ -10,6 +10,7 @@ class ScoreHistorySerializer(serializers.ModelSerializer):
 class OverallRankingSerializer(serializers.Serializer):
     nickname = serializers.CharField(max_length=30)
     image_url = serializers.SerializerMethodField()  # 이미지 URL 필드 추가
+    score = serializers.IntegerField()
     rank = serializers.IntegerField(allow_null=True)
 
     def get_image_url(self, obj):
