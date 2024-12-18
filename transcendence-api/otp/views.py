@@ -47,17 +47,17 @@ class VerifyOTPView(APIView):
 
         serializer = VerifyOTPSerializer(data=request.data)
         if serializer.is_valid():
-            # otp_code = serializer.validated_data['otp']
-            #
-            # otp_instance = OTP.objects.filter(user=user).last()
-            # if not otp_instance:
-            #     return Response({"error": "No OTP found for this user"}, status=status.HTTP_404_NOT_FOUND)
-            #
-            # if otp_instance.otp != otp_code:
-            #     return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
-            #
-            # if not otp_instance.is_valid():
-            #     return Response({"error": "OTP has expired"}, status=status.HTTP_400_BAD_REQUEST)
+            otp_code = serializer.validated_data['otp']
+            
+            otp_instance = OTP.objects.filter(user=user).last()
+            if not otp_instance:
+                return Response({"error": "No OTP found for this user"}, status=status.HTTP_404_NOT_FOUND)
+            
+            if otp_instance.otp != otp_code:
+                return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            if not otp_instance.is_valid():
+                return Response({"error": "OTP has expired"}, status=status.HTTP_400_BAD_REQUEST)
 
             refresh = RefreshToken.for_user(user)
             access_token = str(refresh.access_token)
