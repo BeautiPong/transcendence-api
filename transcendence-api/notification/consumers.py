@@ -7,8 +7,10 @@ from rest_framework.utils import json
 
 import friend.views
 import message.views
+
 from friend.views import get_my_friends_request
 from friend.models import Friend
+from users.models import CustomUser
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -82,6 +84,15 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         friend_list = [friend.user2 for friend in friend_with_user1]
         return friend_list
 
+    @database_sync_to_async
+    def is_user_blocked(self, user1, user2):
+        # user1이 user2를 차단했는지 확인
+        return Friend.objects.filter(
+            user1=user1,
+            user2=user2,
+            status=Friend.Status.BLOCK
+        ).exists()
+
     async def status_message(self, event):
         message = event['message']
         sender = event['sender']
@@ -92,6 +103,10 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def refresh_user(self, user):
         return user.__class__.objects.get(pk=user.pk)
+
+    @database_sync_to_async
+    def get_user_by_nickname(self, nickname):
+        return CustomUser.objects.filter(nickname=nickname).first()
 
     async def receive(self, text_data):
         try:
@@ -171,15 +186,19 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 receiver = data.get('receiver')
                 message = data.get('message')
 
-                # is_blocked_by_receiver = Friend.objects.filter(
-                #     user1=receiver,
-                #     user2=sender,
-                #     status=Friend.Status.BLOCK
-                # ).exists()
+                # receiver와 sender 객체 가져오기
+                receiver_object = await self.get_user_by_nickname(receiver)
+                sender_object = await self.get_user_by_nickname(sender)
 
-                # if is_blocked_by_receiver:
-                #     return
+                # 상대가 나를 차단했는지 확인
+                is_blocked_by_receiver = await self.is_user_blocked(receiver_object, sender_object)
 
+                # 만약 차단한 상태라면 메시지를 보내지 않음
+                if is_blocked_by_receiver:
+                    print(f"{sender}는 {receiver}에 의해 차단되었습니다. 메시지를 보내지 않습니다.")
+                    return
+
+                # 차단되지 않았다면 메시지를 전송
                 await self.channel_layer.group_send(
                     f"user_{receiver}", {
                         'type': 'notify_message',
@@ -187,6 +206,8 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                         'message': message
                     }
                 )
+
+
 
 
     async def invite_game(self, event):
