@@ -170,6 +170,16 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 sender = data.get('sender')
                 receiver = data.get('receiver')
                 message = data.get('message')
+
+                # is_blocked_by_receiver = Friend.objects.filter(
+                #     user1=receiver,
+                #     user2=sender,
+                #     status=Friend.Status.BLOCK
+                # ).exists()
+
+                # if is_blocked_by_receiver:
+                #     return
+
                 await self.channel_layer.group_send(
                     f"user_{receiver}", {
                         'type': 'notify_message',

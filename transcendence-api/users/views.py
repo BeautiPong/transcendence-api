@@ -26,14 +26,15 @@ from users.utils import get_user_info
 from datetime import timedelta
 from .utils import save_image_from_url
 
-import os 
+import os
 # Create your views here.
 
 def get_code(request):
     client_id = 'u-s4t2ud-5165cfc59957b2a5cd674a6fc909e1e94378eff8b68d30144cbf571ed0b80ea1'
-    redirect_uri = 'http://localhost:81/42oauth-redirect'
+    server_ip = os.environ.get('SERVER_IP')
+    redirect_uri = f'{server_ip}/42oauth-redirect'
     response_type = 'code'
-    oauth_url = f'https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={urllib.parse.quote(redirect_uri)}&response_type={response_type}'
+    oauth_url = f'https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type={response_type}'
 
     return HttpResponseRedirect(oauth_url)  # redirect to 42 login page
 
@@ -41,7 +42,8 @@ def get_token(request):
     code = request.GET.get('code')
     client_id = 'u-s4t2ud-5165cfc59957b2a5cd674a6fc909e1e94378eff8b68d30144cbf571ed0b80ea1'  # 42에서 제공한 클라이언트 ID
     client_secret = os.environ.get('OAuth_Secret_Key')  # 42에서 제공한 클라이언트 시크릿
-    redirect_uri = 'http://localhost:81/42oauth-redirect'  # 이전에 사용한 리디렉션 URL
+    server_ip = os.environ.get('SERVER_IP')
+    redirect_uri = f'{server_ip}/42oauth-redirect'  # 이전에 사용한 리디렉션 URL
     grant_type = 'authorization_code'
     scope = 'public profile'  # 42에서 제공한 스코프
     token_url = 'https://api.intra.42.fr/oauth/token'
@@ -144,7 +146,7 @@ class OauthNicknameView(APIView) :
 class CustomPasswordValidator:
     def validate(self, password):
         if len(password) < 8:
-            raise ValidationError(f"비밀번호는 최소 8글자 이상이어야 합니다.")
+            raise ValidationError("비밀번호는 최소 8글자 이상이어야 합니다.")
         if not re.search(r'[A-Z]', password):
             raise ValidationError("비밀번호는 대문자를 하나 이상 포함해야 합니다.")
         if not re.search(r'[a-z]', password):
@@ -152,7 +154,9 @@ class CustomPasswordValidator:
         if not re.search(r'\d', password):
             raise ValidationError("비밀번호는 숫자를 하나 이상 포함해야 합니다.")
         if not re.search(r'[@$!%*?&]', password):
-            raise ValidationError("비밀번호는 특수 문자를 하나 이상 포함해야 합니다.")
+            print("특수문자 에러")
+            raise ValidationError("비밀번호는 특수 문자(@$!%*?&)를 하나 이상 포함해야 합니다.")
+        print("test")
 
     def get_help_text(self):
         return "비밀번호는 대문자, 소문자, 숫자 및 특수 문자를 포함해야 합니다."
@@ -320,10 +324,10 @@ class UserInfoView(APIView):
             return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = UserInfoSerializer(user, context={'request': request})
-        
+
         # 승률 계산
         win_rate = round(user.win_cnt / user.match_cnt * 100, 2) if user.match_cnt != 0 else 0
-        
+
         # 직렬화된 데이터와 승률 포함
         response_data = serializer.data
         response_data['win_rate'] = win_rate

@@ -293,3 +293,45 @@ class PendFriendRequest(APIView) :
         sorted_friend_data = sorted(friend_info_serializer.data, key=lambda user_info: user_info["nickname"])
 
         return Response({'friends': sorted_friend_data}, status=status.HTTP_200_OK)
+
+
+# # 상대방이 나를 차단했는지 조회
+# class BlockedMe(APIView) :
+#     permission_classes = [IsAuthenticated]
+#     authentication_classes = [JWTAuthentication]
+
+#     def get(self, request, friend_nickname) :
+#         user = request.user  #나
+
+#         friend = Friend.objects.filter(user1=friend_nickname,user2=user, status='BL').first()
+
+#         if friend:
+#             return Response({"message": f"You are blocked by {friend_nickname}."}, status=200)
+
+#         return Response({"message": "You are not blocked."}, status=200)
+
+# # 상대방이 나를 차단했을때 바로 메시지 db에 저장
+# class saveMessage(APIView) :
+#     permission_classes = [IsAuthenticated]
+#     authentication_classes = [JWTAuthentication]
+
+#     def post(self, request) :
+
+#         data = json.loads(request.body)
+
+#         room_name = data.get("room_name")
+#         sender = data.get("sender")
+#         message = data.get("message")
+
+#         room = ChattingRoom.objects.filter(name=room_name).first()
+#         user = CustomUser.objects.filter(nickname=sender).first()
+
+#         # Save message with current time
+#         message = Message.objects.create(
+#             room=room,
+#             sender=user,
+#             content=message,
+#             created_at=datetime.now()
+#         )
+
+#         return Response({"message": "message 저장 완료"}, status=200)

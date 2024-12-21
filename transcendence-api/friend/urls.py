@@ -12,4 +12,7 @@ urlpatterns = [
     path('block-list/', GetBlockFriendList.as_view(), name='get_block_friend'), #차단된 친구 조회
     # path('test/', AddFriendsV2.as_view(),name='test'),
     path('pend/', PendFriendRequest.as_view(), name='pend_friend'), #아직 읽지 않은 친구 요청 확인
+
+    # path('block/me/<str:friend_nickname>/', BlockedMe.as_view(), name='block_me'),  #상대방이 나를 차단했는지 확인
+    # path('save/message/', saveMessage.as_view(), name='save_message'),
 ]
