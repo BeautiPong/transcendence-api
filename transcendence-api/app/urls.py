@@ -23,5 +23,5 @@ urlpatterns = [
     path('api/chat/', include("chat.urls")),
 ]
 
-if settings.DEBUG:  # 개발 환경에서만 미디어 파일 서빙
+if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

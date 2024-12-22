@@ -87,7 +87,6 @@ class MatchingConsumer(AsyncWebsocketConsumer):
 
     async def add_user_to_room(self, room_name, nickname):
         # 사용자를 방에 추가 (Redis set 사용)
-        # asyncio.sleep(1)
         await self.redis_client.sadd(f"group_{room_name}", nickname)
         print("self.redis_client.sadd : ", f"group_{room_name}", nickname)
         print("players num : ",await self.check_room_capacity(self.room_name))
@@ -205,8 +204,6 @@ class MatchingConsumer(AsyncWebsocketConsumer):
 
 
     async def game_start(self, event):
-        # print("self.room_name", self.room_name)
-        # print("event['room_name']", event['room_name'])
         if(self.room_name and 'room_name' in event):
             await self.send(text_data=json.dumps({
                 'type': 'game_start',
@@ -216,8 +213,6 @@ class MatchingConsumer(AsyncWebsocketConsumer):
 
 
     async def game_start_friend(self, event):
-        # print("self.room_name", self.room_name)
-        # print("event['room_name']", event['room_name'])
         if(self.room_name and 'room_name' in event):
             await self.send(text_data=json.dumps({
                 'type': 'game_start',
@@ -273,7 +268,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             else:
                 self.players = {'player1': name2, 'player2': name1}
 
-            # print(f"{self.player_name} is player1 in room {self.room_name}")
             await self.send(text_data=json.dumps({
                 'type': 'assign_role',
                 'role': 'player1'
@@ -284,7 +278,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             else:
                 self.players = {'player1': name1, 'player2': name2}
 
-            # print(f"{self.player_name} is player2 in room {self.room_name}")
             await self.send(text_data=json.dumps({
                 'type': 'assign_role',
                 'role': 'player2'
@@ -337,7 +330,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         if data['type'] == 'move':
             direction = data['direction']
             player = data['player']
-            # print(data)
 
             if player == 'player1':
                 self.paddle_positions['player1'] = max(-(self.table_width - self.paddle_width - self.borderThickness) / 2, min((self.table_width - self.paddle_width - self.borderThickness) / 2, self.paddle_positions['player1'] + (-0.1 if direction == 'right' else 0.1)))
@@ -508,9 +500,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         # 연결을 끊기 전에 일정 시간 대기 (예: 2초)
         await asyncio.sleep(2)
 
-        # await self.save_game_results(winner)
-
-        # WebSocket 연결 종료
         await self.close()
 
 
@@ -645,7 +634,6 @@ class OfflineConsumer(AsyncWebsocketConsumer):
         await task1
         if(self.player_count == 4):
             winner1 = self.winner
-            print(self.winner)
             #대기1
             while(self.wait):
                 await asyncio.sleep(0.3)
@@ -653,8 +641,6 @@ class OfflineConsumer(AsyncWebsocketConsumer):
             task2 = asyncio.create_task(self.game_loop(self.user3, self.user4))
             await task2
             winner2 = self.winner
-            print(self.winner)
-            print("winner1 = ", winner1, "winner2 = ", winner2)
             #대기2
             while(self.wait):
                 await asyncio.sleep(0.3)
@@ -665,15 +651,11 @@ class OfflineConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         self.keep_running = False
-        print("Gameconsumer WebSocket disconnected")
-        # await self.channel_layer.group_discard(self.room_name, self.channel_name)
 
     async def receive(self, text_data):
         try:
             data = json.loads(text_data)
-            # print("Received data:", data)  # 서버에서 받은 데이터를 출력해 확인
         except json.JSONDecodeError as e:
-            print(f"Error decoding JSON: {e}")
         data = json.loads(text_data)
 
         if 'key' in data:

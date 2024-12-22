@@ -15,7 +15,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         user = self.scope['user']
 
         if user.is_authenticated:
-            # await self.set_user_active_status(user, True)
 
             self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
             self.room_group_name = f"chat_{self.room_name}"
@@ -124,19 +123,4 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "sender" : sender,
                     "message" : message
                 }))
-
-
-        # if user.is_authenticated:
-
-        #     if (user.nickname == sender) :
-        #         await self.send(text_data=json.dumps({
-        #             "sender" : sender,
-        #             "message" : message
-        #         }))
-        #     else :
-        #         await self.send(text_data=json.dumps({
-        #             "sender" : sender,
-        #             "message" : message
-        #         }))
-
 

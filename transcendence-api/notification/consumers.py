@@ -46,9 +46,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             # group_discard를 인증된 사용자 블록 내부로 이동
             if hasattr(self, 'group_name'):
                 await self.channel_layer.group_discard(self.group_name, self.channel_name)
-        # if self.waiting_room:
-        #     await self.channel_layer.group_discard(self.waiting_room, self.channel_name)
-        #     await self.redis_client.srem(self.waiting_room, user.nickname.encode())
 
 
     async def notify_friends_status(self, user, status):
@@ -78,8 +75,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_friends_list(self, user):
         # 비동기로 친구 리스트 가져오기 (예시로 Django ORM 사용)
-        # friends = await database_sync_to_async(lambda: user.friends.all())()
-        # return friends
         friend_with_user1 = Friend.objects.filter(user1=user, status=Friend.Status.ACCEPT)
         friend_list = [friend.user2 for friend in friend_with_user1]
         return friend_list
@@ -111,7 +106,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         try:
             data = json.loads(text_data)
-            # print("Received data:", data)  # 서버에서 받은 데이터를 출력해 확인
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON: {e}")
         data = json.loads(text_data)
@@ -298,15 +292,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             'tag' : tag
         }))
 
-    # async def invite_game(self, event):
-    #     sender = event["sender"]
-    #     message = event["message"]
-
-    #     await self.send(text_data=json.dumps({
-    #         'sender': sender,
-    #         'type': 'invite_game',
-    #         'message': message
-    #     }))
 
     async def join_room(self, event):
         self.waiting_room = event["waiting_room"]
