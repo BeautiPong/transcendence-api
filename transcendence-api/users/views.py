@@ -126,6 +126,12 @@ class OauthNicknameView(APIView) :
         if CustomUser.objects.filter(nickname=new_nickname).exists():
             return Response({"message": "이미 사용 중인 닉네임입니다."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # 글자 수 체크
+        try:
+            validate_nickname_length(new_nickname)
+        except ValidationError as e:
+            return Response({"message": e.message}, status=status.HTTP_400_BAD_REQUEST)
+
         # 현재 로그인한 유저 정보 가져오기
         user = request.user
         # 닉네임 설정
@@ -161,6 +167,14 @@ class CustomPasswordValidator:
     def get_help_text(self):
         return "비밀번호는 대문자, 소문자, 숫자 및 특수 문자를 포함해야 합니다."
 
+def validate_user_id_length(user_id):
+    if len(user_id) > 30:
+        raise ValidationError("아이디는 최대 30글자 가능합니다.")
+
+def validate_nickname_length(user_id):
+    if len(user_id) > 30:
+        raise ValidationError("닉네임은 최대 30글자 가능합니다.")
+
 # 회원가입
 @csrf_exempt
 def join (request) :
@@ -185,6 +199,8 @@ def join (request) :
     try:
         validator = CustomPasswordValidator()
         validator.validate(password=password)
+        validate_user_id_length(userID)
+        validate_nickname_length(nickname)
     except ValidationError as e:
         return JsonResponse({"message": e.message}, status=status.HTTP_400_BAD_REQUEST)
 
