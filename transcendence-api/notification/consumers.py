@@ -11,6 +11,7 @@ import message.views
 from friend.views import get_my_friends_request
 from friend.models import Friend
 from users.models import CustomUser
+import logging
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -34,6 +35,8 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         user = self.scope['user']
+        logger = logging.getLogger(__name__)
+
         if user.is_authenticated:
             try:
                 user = await self.refresh_user(user)  # 사용자 객체 다시 가져오기
@@ -41,7 +44,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 # 친구들에게 나의 상태 알림 전송
                 await self.notify_friends_status(user, 'offline')
             except Exception as e:
-                print(f"Error in disconnect: {e}")
+                logger.error(f"Error in disconnect: {e}")
 
             # group_discard를 인증된 사용자 블록 내부로 이동
             if hasattr(self, 'group_name'):
@@ -104,10 +107,11 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         return CustomUser.objects.filter(nickname=nickname).first()
 
     async def receive(self, text_data):
+        logger = logging.getLogger(__name__)
         try:
             data = json.loads(text_data)
         except json.JSONDecodeError as e:
-            print(f"Error decoding JSON: {e}")
+            logger.error(f"Error decoding JSON: {e}")
         data = json.loads(text_data)
 
         if 'type' in data:
@@ -116,7 +120,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 receiver = data.get('receiver')  # 'receiver' 필드를 추출
                 message = data.get('message')  # 'message' 필드를 추출
 
-                print("receiver:", receiver)
 
                 #일단 초대 알람 보내기
                 await self.channel_layer.group_send(
@@ -129,7 +132,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 )
 
             elif data['type'] == 'access_invitation':
-                print("access_invitation")
                 sender = data.get('sender')  # 'sender' 필드를 추출
                 receiver = data.get('receiver')  # 'receiver' 필드를 추출
                 message = data.get('message')  # 'message' 필드를 추출
@@ -189,7 +191,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
                 # 만약 차단한 상태라면 메시지를 보내지 않음
                 if is_blocked_by_receiver:
-                    print(f"{sender}는 {receiver}에 의해 차단되었습니다. 메시지를 보내지 않습니다.")
                     return
 
                 # 차단되지 않았다면 메시지를 전송

@@ -160,9 +160,7 @@ class CustomPasswordValidator:
         if not re.search(r'\d', password):
             raise ValidationError("비밀번호는 숫자를 하나 이상 포함해야 합니다.")
         if not re.search(r'[@$!%*?&]', password):
-            print("특수문자 에러")
             raise ValidationError("비밀번호는 특수 문자(@$!%*?&)를 하나 이상 포함해야 합니다.")
-        print("test")
 
     def get_help_text(self):
         return "비밀번호는 대문자, 소문자, 숫자 및 특수 문자를 포함해야 합니다."
@@ -308,7 +306,6 @@ class UserProfileView(APIView):
 
         win_rate = round(user.win_cnt / user.match_cnt * 100, 2) if user.match_cnt != 0 else 0
         response_data = serializer.data
-        print(response_data['image'])
         response_data['win_rate'] = win_rate
 
         return Response(response_data, status=status.HTTP_200_OK)

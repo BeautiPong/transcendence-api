@@ -13,6 +13,7 @@ from friend.models import Friend
 from scoreHistory.models import ScoreHistory
 from users.models import CustomUser
 from .models import Game
+import logging
 
 
 class MatchingConsumer(AsyncWebsocketConsumer):
@@ -35,10 +36,8 @@ class MatchingConsumer(AsyncWebsocketConsumer):
                 await self.redis_client.lpush(self.matchmaking_queue_key, self.user.nickname)
                 await self.match_users()
             else:
-                print("self.user.nickname in matchingconsumer: ",self.user.nickname)
                 await self.add_user_to_room(self.room_name, self.user.nickname)
                 players_in_room = await self.check_room_capacity(self.room_name)
-                print("players_in_room: ",players_in_room)
                 if players_in_room > 2:
                     await self.close()
                     return
@@ -70,6 +69,7 @@ class MatchingConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def set_user_game_status(self, user, is_in_game):
+        logger = logging.getLogger(__name__)
         try:
             with transaction.atomic():
                 # 유저 상태를 select_for_update로 잠금
@@ -77,7 +77,7 @@ class MatchingConsumer(AsyncWebsocketConsumer):
                 user.is_in_game = is_in_game
                 user.save()
         except Exception as e:
-            print(f"Error updating user game status: {e}")
+            logger.error(f"Error updating user game status: {e}")
 
 
 
@@ -87,9 +87,8 @@ class MatchingConsumer(AsyncWebsocketConsumer):
 
     async def add_user_to_room(self, room_name, nickname):
         # 사용자를 방에 추가 (Redis set 사용)
+        # asyncio.sleep(1)
         await self.redis_client.sadd(f"group_{room_name}", nickname)
-        print("self.redis_client.sadd : ", f"group_{room_name}", nickname)
-        print("players num : ",await self.check_room_capacity(self.room_name))
 
     async def remove_user_from_room(self, room_name, nickname):
         # 사용자를 방에서 제거 (Redis set 사용)
@@ -184,7 +183,6 @@ class MatchingConsumer(AsyncWebsocketConsumer):
                 guest = name2
             else:
                 guest = name1
-            print("guest : ",guest)
             await self.channel_layer.group_send(
                 self.room_name,
                 {
@@ -312,6 +310,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def set_user_game_status(self, user, is_in_game):
+        logger = logging.getLogger(__name__)
         try:
             with transaction.atomic():
                 # 유저 상태를 select_for_update로 잠금
@@ -319,7 +318,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 user.is_in_game = is_in_game
                 user.save()
         except Exception as e:
-            print(f"Error updating user game status: {e}")
+            logger.error(f"Error updating user game status: {e}")
 
 
     async def receive(self, text_data):
@@ -349,6 +348,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         asyncio.create_task(self.game_loop())
 
     async def game_loop(self):
+        logger = logging.getLogger(__name__)
         try:
             while self.game_active:
                 # WebSocket 연결 상태 확인
@@ -360,10 +360,11 @@ class GameConsumer(AsyncWebsocketConsumer):
                 await self.send_game_state()
                 await asyncio.sleep(0.01)  # 게임 속도 조절
         except Exception as e:
-            print(f"game_loop에서 에러 발생: {e}")
+            logger.error(f"game_loop에서 에러 발생: {e}")
             await self.close()
 
     async def update_ball_position(self):
+        logger = logging.getLogger(__name__)
         try:
             if not self.game_active:
                 return  # 게임이 종료된 경우 공 위치 업데이트 중지
@@ -409,7 +410,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             self.ball_velocity['z'] = max(min(self.ball_velocity['z'], 0.1), -0.1)
 
         except Exception as e:
-            print(f"Error in update_ball_position: {e}")
+            logger.error(f"Error in update_ball_position: {e}")
             await self.close()
 
 
@@ -424,6 +425,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.send_game_state()
 
     async def send_game_state(self):
+        logger = logging.getLogger(__name__)
         try:
             if not self.connection_open:
                 return  # 연결이 닫힌 경우 전송하지 않음
@@ -440,9 +442,9 @@ class GameConsumer(AsyncWebsocketConsumer):
                 }
             )
         except Disconnected:
-            print("WebSocket이 닫혀서 게임 상태를 전송할 수 없습니다.")
+            logger.error("WebSocket이 닫혀서 게임 상태를 전송할 수 없습니다.")
         except Exception as e:
-            print(f"send_game_state에서 에러 발생: {e}")
+            logger.error(f"send_game_state에서 에러 발생: {e}")
             await self.close()
 
     async def send_update(self, event):
@@ -500,11 +502,15 @@ class GameConsumer(AsyncWebsocketConsumer):
         # 연결을 끊기 전에 일정 시간 대기 (예: 2초)
         await asyncio.sleep(2)
 
+        # await self.save_game_results(winner)
+
+        # WebSocket 연결 종료
         await self.close()
 
 
     @database_sync_to_async
     def save_game_results(self, winner):
+        logger = logging.getLogger(__name__)
         try:
             with transaction.atomic():  # 트랜잭션 시작
                 user1 = CustomUser.objects.select_for_update().get(nickname=self.players['player1'])
@@ -553,9 +559,9 @@ class GameConsumer(AsyncWebsocketConsumer):
                 score_history2.save()
 
         except CustomUser.DoesNotExist:
-            print("User not found.")
+            logger.error("User not found.")
         except Exception as e:
-            print(f"Error saving game results: {e}")
+            logger.error(f"Error saving game results: {e}")
 
     async def game_over(self, event):
         self.game_active = False
@@ -582,14 +588,14 @@ class GameConsumer(AsyncWebsocketConsumer):
         return await self.redis_client.scard(f"group_{room_name}")
 
     async def add_user_to_room(self, room_name, nickname):
-        print("add_user_to_room2")
         await self.redis_client.sadd(f"group_{room_name}", nickname)
 
     async def remove_user_from_room(self, room_name, nickname):
+        logger = logging.getLogger(__name__)
         try:
             await self.redis_client.srem(f"group_{room_name}", nickname)
         except Exception as e:
-            print(f"Error in remove_user_from_room: {e}")
+            logger.error(f"Error in remove_user_from_room: {e}")
 
 
 
@@ -606,7 +612,6 @@ class OfflineConsumer(AsyncWebsocketConsumer):
         if(self.user2): self.player_count += 1
         if(self.user3): self.player_count += 1
         if(self.user4): self.player_count += 1
-        print("player count = ", self.player_count)
 
     async def connect(self):
         self.user = self.scope['user']
@@ -617,15 +622,11 @@ class OfflineConsumer(AsyncWebsocketConsumer):
         self.lose_score = 0
         self.wait = True
         self.count_player()
-        print("local connect")
-        print("user =", self.user)
-        print("URL Route Kwargs:", self.scope['url_route']['kwargs'])
         self.keep_running = True
         await self.accept()
         await self.send(text_data=json.dumps({
             'type': 'game_start'
         }))
-        print(self.winner)
         asyncio.create_task(self.game_execute())
 
 
@@ -651,11 +652,14 @@ class OfflineConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         self.keep_running = False
+        # await self.channel_layer.group_discard(self.room_name, self.channel_name)
 
     async def receive(self, text_data):
+        logger = logging.getLogger(__name__)
         try:
             data = json.loads(text_data)
         except json.JSONDecodeError as e:
+            logger.error(f"Error decoding JSON: {e}")
         data = json.loads(text_data)
 
         if 'key' in data:
@@ -678,8 +682,6 @@ class OfflineConsumer(AsyncWebsocketConsumer):
 
     async def game_loop(self,user1, user2):
         self.game = PingPongGame(100,50,4, user1, user2)
-        print("game created")
-        print("user1 =", user1, "user2 =", user2)
         while (self.keep_running):
             await asyncio.sleep(0.1)
             self.game.move_ball()

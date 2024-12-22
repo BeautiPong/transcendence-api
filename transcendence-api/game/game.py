@@ -26,7 +26,6 @@ class PingPongGame:
         패들은 키보드 입력에 따라 상대적으로 이동합니다.
         :param key: 'w', 's', 'o', 'l' 중 하나로, 각 키에 따라 패들의 이동 방향을 지정합니다.
         """
-        # print("key: ", key)
         if key == 'KeyW':
             # player1의 패들을 위로 이동 (z축 양의 방향)
             if self.player1_paddle_z > -self.table_length // 2 + self.paddle_width // 2:

@@ -234,7 +234,6 @@ class SearchFriend(APIView):
     authentication_classes = [JWTAuthentication]
 
     def get(self, request, friend_nickname):
-        print(f"Received request to find friend with nickname: {friend_nickname}")
 
         try:
             find_friend = CustomUser.objects.get(nickname=friend_nickname)

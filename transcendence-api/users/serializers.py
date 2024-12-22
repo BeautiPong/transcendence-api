@@ -22,7 +22,6 @@ class UserInfoSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         # 이미지 업데이트
         image = validated_data.get('image', None)
-        print(image)
         if image is not None:
             instance.image = image
 
