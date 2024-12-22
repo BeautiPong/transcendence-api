@@ -622,10 +622,10 @@ class OfflineConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.user = self.scope['user']
         self.player_count = 0
-        self.winner = None
-        self.loser = None
-        self.win_score = 0
-        self.lose_score = 0
+        self.winner = ''
+        # self.loser = None
+        # self.win_score = 0
+        # self.lose_score = 0
         self.wait = True
         self.count_player()
         print("local connect")
