@@ -160,9 +160,7 @@ class CustomPasswordValidator:
         if not re.search(r'\d', password):
             raise ValidationError("비밀번호는 숫자를 하나 이상 포함해야 합니다.")
         if not re.search(r'[@$!%*?&]', password):
-            print("특수문자 에러")
             raise ValidationError("비밀번호는 특수 문자(@$!%*?&)를 하나 이상 포함해야 합니다.")
-        print("test")
 
     def get_help_text(self):
         return "비밀번호는 대문자, 소문자, 숫자 및 특수 문자를 포함해야 합니다."
@@ -308,7 +306,6 @@ class UserProfileView(APIView):
 
         win_rate = round(user.win_cnt / user.match_cnt * 100, 2) if user.match_cnt != 0 else 0
         response_data = serializer.data
-        print(response_data['image'])
         response_data['win_rate'] = win_rate
 
         return Response(response_data, status=status.HTTP_200_OK)
@@ -383,20 +380,6 @@ class UserRankingView(APIView):
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 import urllib.parse
-
-@csrf_exempt
-def login_and_redirect(request):
-    if request.method == 'GET':
-        token = request.GET.get('token')
-
-        if token:
-            # `user/test.html`로 토큰 전달
-            return render(request, 'users/test.html', {'jwt_token': token})
-        else:
-            return redirect('/login_page/')  # 토큰이 없을 경우 로그인 페이지로 리다이렉트
-
-    else:
-        return redirect('/login_page/')  # POST 요청이 아닐 경우 로그인 페이지로 리다이렉트
 
 
 class DeleteAccountView(APIView):

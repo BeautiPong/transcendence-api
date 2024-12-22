@@ -11,6 +11,7 @@ import message.views
 from friend.views import get_my_friends_request
 from friend.models import Friend
 from users.models import CustomUser
+import logging
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -34,6 +35,8 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         user = self.scope['user']
+        logger = logging.getLogger(__name__)
+
         if user.is_authenticated:
             try:
                 user = await self.refresh_user(user)  # 사용자 객체 다시 가져오기
@@ -41,14 +44,11 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 # 친구들에게 나의 상태 알림 전송
                 await self.notify_friends_status(user, 'offline')
             except Exception as e:
-                print(f"Error in disconnect: {e}")
+                logger.error(f"Error in disconnect: {e}")
 
             # group_discard를 인증된 사용자 블록 내부로 이동
             if hasattr(self, 'group_name'):
                 await self.channel_layer.group_discard(self.group_name, self.channel_name)
-        # if self.waiting_room:
-        #     await self.channel_layer.group_discard(self.waiting_room, self.channel_name)
-        #     await self.redis_client.srem(self.waiting_room, user.nickname.encode())
 
 
     async def notify_friends_status(self, user, status):
@@ -78,8 +78,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_friends_list(self, user):
         # 비동기로 친구 리스트 가져오기 (예시로 Django ORM 사용)
-        # friends = await database_sync_to_async(lambda: user.friends.all())()
-        # return friends
         friend_with_user1 = Friend.objects.filter(user1=user, status=Friend.Status.ACCEPT)
         friend_list = [friend.user2 for friend in friend_with_user1]
         return friend_list
@@ -109,11 +107,11 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         return CustomUser.objects.filter(nickname=nickname).first()
 
     async def receive(self, text_data):
+        logger = logging.getLogger(__name__)
         try:
             data = json.loads(text_data)
-            # print("Received data:", data)  # 서버에서 받은 데이터를 출력해 확인
         except json.JSONDecodeError as e:
-            print(f"Error decoding JSON: {e}")
+            logger.error(f"Error decoding JSON: {e}")
         data = json.loads(text_data)
 
         if 'type' in data:
@@ -122,7 +120,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 receiver = data.get('receiver')  # 'receiver' 필드를 추출
                 message = data.get('message')  # 'message' 필드를 추출
 
-                print("receiver:", receiver)
 
                 #일단 초대 알람 보내기
                 await self.channel_layer.group_send(
@@ -135,7 +132,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 )
 
             elif data['type'] == 'access_invitation':
-                print("access_invitation")
                 sender = data.get('sender')  # 'sender' 필드를 추출
                 receiver = data.get('receiver')  # 'receiver' 필드를 추출
                 message = data.get('message')  # 'message' 필드를 추출
@@ -195,7 +191,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
                 # 만약 차단한 상태라면 메시지를 보내지 않음
                 if is_blocked_by_receiver:
-                    print(f"{sender}는 {receiver}에 의해 차단되었습니다. 메시지를 보내지 않습니다.")
                     return
 
                 # 차단되지 않았다면 메시지를 전송
@@ -298,15 +293,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             'tag' : tag
         }))
 
-    # async def invite_game(self, event):
-    #     sender = event["sender"]
-    #     message = event["message"]
-
-    #     await self.send(text_data=json.dumps({
-    #         'sender': sender,
-    #         'type': 'invite_game',
-    #         'message': message
-    #     }))
 
     async def join_room(self, event):
         self.waiting_room = event["waiting_room"]

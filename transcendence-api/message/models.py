@@ -17,4 +17,4 @@ class Message(models.Model):
         max_length=10,
         choices=READ_STATUS_CHOICES,
         default='no_read'
-    )#reciever가 읽으면 상태 바뀌도록. -> 읽었는지 어떻게 알지? -> 채팅방에 들어와있는지 안들어와있는지 확인 후 상태 변경.
+    )

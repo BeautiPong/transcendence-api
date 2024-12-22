@@ -18,16 +18,10 @@ class UserInfoSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri('/path/to/default/image.jpg')
         return '/path/to/default/image.jpg'
 
-        # request = self.context.get('request')
-        # if obj.image:
-        #     # 이미지가 존재하면 절대 URL을 반환
-        #     return request.build_absolute_uri(obj.image.url)
-        # return request.build_absolute_uri('/path/to/default/image.jpg')  # 기본 이미지 경로
 
     def update(self, instance, validated_data):
         # 이미지 업데이트
         image = validated_data.get('image', None)
-        print(image)
         if image is not None:
             instance.image = image
 

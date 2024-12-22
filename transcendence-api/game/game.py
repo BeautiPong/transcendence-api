@@ -10,7 +10,6 @@ class PingPongGame:
         self.player2_paddle_x = self.table_width // 2 - self.paddle_width  # player2의 x축 위치 (탁구대의 오른쪽 끝 부분)
 
         # 공의 초기 위치와 방향
-        # self.ball_pos = [self.table_width // 2, self.table_length // 2]  # 공의 x, z 좌표
         self.ball_pos = [0, 0]
         self.ball_dir = [1, 1]  # x축과 z축으로 공이 이동하는 방향
 
@@ -27,7 +26,6 @@ class PingPongGame:
         패들은 키보드 입력에 따라 상대적으로 이동합니다.
         :param key: 'w', 's', 'o', 'l' 중 하나로, 각 키에 따라 패들의 이동 방향을 지정합니다.
         """
-        # print("key: ", key)
         if key == 'KeyW':
             # player1의 패들을 위로 이동 (z축 양의 방향)
             if self.player1_paddle_z > -self.table_length // 2 + self.paddle_width // 2:
@@ -91,15 +89,3 @@ class PingPongGame:
             'player2_score': self.player2_score
         }
 
-# 사용 예시
-# game = PingPongGame(table_width=50, table_length=100, paddle_width=10, userA="PlayerA", userB="PlayerB")
-
-# # 키보드 입력에 따라 패들 이동
-# game.move_paddle('w')  # player1 패들을 위로 이동
-# game.move_paddle('o')  # player2 패들을 위로 이동
-
-# # 공을 이동시키고 게임 상태를 확인
-# game.move_ball()
-# state = game.get_game_state()
-
-# print(state)  # {'ball_pos': [1, 1], 'player1_paddle_z': 50, 'player2_paddle_z': 50, 'player1_score': 0, 'player2_score': 0}
