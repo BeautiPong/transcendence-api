@@ -13,5 +13,6 @@ venv/
 data/
 .env
 *.jpg
+*.png
 ./tra
-./transcendence-api/media/profile_pics/**
+transcendence-api/media/profile_pics/**
